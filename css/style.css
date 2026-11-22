@@ -1,0 +1,442 @@
+:root {
+  --bg: #f4f1ea;
+  --panel: #fffdf8;
+  --ink: #1c1b19;
+  --muted: #69655c;
+  --line: #e2dccf;
+  --paper: #ffffff;
+  --paper-ink: #1c1b19;
+  --paper-line: #e9e4d8;
+  --accent: #b45309;
+  --on-accent: #ffffff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 5%), 0 10px 30px rgb(60 50 30 / 7%);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131312;
+    --panel: #1c1b19;
+    --ink: #f1eee7;
+    --muted: #a9a499;
+    --line: #34322d;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 30px rgb(0 0 0 / 30%);
+    color-scheme: dark;
+  }
+}
+
+body[data-genre='neo-soul'] { --accent: #b45309; }
+body[data-genre='lofi'] { --accent: #7c3aed; }
+body[data-genre='punk'] { --accent: #e11d48; }
+body[data-genre='post-rock'] { --accent: #0e7490; }
+body[data-genre='shoegaze'] { --accent: #c026d3; }
+body[data-genre='metalcore'] { --accent: #b91c1c; }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 40px 16px 32px;
+}
+
+.masthead h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 5vw, 2.7rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.tagline {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+/* Genres */
+
+.genre-list {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.genre {
+  appearance: none;
+  padding: 10px 8px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.genre:hover {
+  border-color: var(--accent);
+}
+
+.genre[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.genre-blurb {
+  min-height: 1.5em;
+  margin: 12px 4px 0;
+  color: var(--muted);
+}
+
+/* Panels */
+
+.panel {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.progression-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.key {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.romans {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-weight: 500;
+  word-spacing: 0.08em;
+}
+
+/* Chord cards: always paper white, like the printed diagrams they imitate */
+
+.chords {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  padding: 14px 8px 12px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--paper-line);
+  color: var(--paper-ink);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.chord:hover {
+  transform: translateY(-2px);
+}
+
+.chord.is-playing {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: translateY(-3px);
+}
+
+.chord-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.chord-roman {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.chord-frets {
+  color: #7a766c;
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.06em;
+}
+
+.diagram {
+  display: block;
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  margin: 2px 0 4px;
+}
+
+.diagram .fret,
+.diagram .string {
+  stroke: #45423c;
+  stroke-width: 1.2;
+}
+
+.diagram .nut,
+.diagram .dot,
+.diagram .barre {
+  fill: var(--paper-ink);
+}
+
+.diagram .open {
+  fill: none;
+  stroke: var(--paper-ink);
+  stroke-width: 1.4;
+}
+
+.diagram .mute {
+  stroke: var(--paper-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.diagram .position {
+  fill: var(--paper-ink);
+  font: 600 11px ui-sans-serif, system-ui, sans-serif;
+}
+
+.hint {
+  margin: 14px 4px 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* Player */
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+}
+
+.transport,
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.transport {
+  gap: 8px;
+}
+
+.tempo,
+.loop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.tempo output {
+  min-width: 2.2em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+
+input[type='range'] {
+  width: 140px;
+  accent-color: var(--accent);
+}
+
+input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.audio-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Buttons */
+
+.button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.button svg .fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.button.accent,
+.button.play[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.button.accent:hover {
+  filter: brightness(1.08);
+}
+
+.button.subtle {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 10px;
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.button:focus-visible,
+.genre:focus-visible,
+.chord:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+footer {
+  margin-top: 36px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+footer a {
+  color: inherit;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 16px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .genre-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-top: 28px;
+  }
+
+  .chords {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .progression-head .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .transport {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    gap: 6px;
+  }
+
+  .transport .button {
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 6px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
