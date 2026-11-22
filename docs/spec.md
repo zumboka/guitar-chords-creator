@@ -10,7 +10,7 @@ A website that generates guitar chord progressions of four different chords for 
 
 | Topic | Decision |
 |---|---|
-| Metalcore tuning | Standard tuning, like every other genre |
+| Metalcore tuning | Drop D (D A D G B E). Changed on 2026-11-22 with the user's OK while improving the Metalcore sound; every other genre uses standard tuning |
 | Sound | Recorded electric guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
 | Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
@@ -38,7 +38,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Punk | power chords, I–V–vi–IV family, eighth-note downstrokes | E5 – B5 – C♯5 – A5 |
 | Post Rock | add9, sus, maj7 with ringing open strings, picked patterns, delay and reverb | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords over droning open top strings, fuzz, chorus, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
-| Metalcore | minor keys, low power chords, Aeolian and Phrygian moves, palm-muted chugs | E5 – C5 – G5 – D5 |
+| Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, palm-muted chugs | D5 – B♭5 – F5 – C5 |
 
 ## Verification
 

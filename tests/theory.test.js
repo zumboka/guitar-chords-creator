@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { QUALITIES, chordInKey, isDiatonic, parseNote, pretty, spellDegree } from '../js/theory.js';
+import { QUALITIES, TUNINGS, chordInKey, isDiatonic, parseNote, pretty, spellDegree } from '../js/theory.js';
 
 test('degrees are spelled with the letter the key calls for', () => {
   const name = (tonic, mode, degree, acc) => spellDegree({ tonic, mode }, degree, acc).name;
@@ -32,6 +32,14 @@ test('chord qualities are consistent', () => {
     for (const i of q.required) assert.ok(q.intervals.includes(i), `${id}: required ${i} is a chord tone`);
     assert.equal(new Set(q.intervals).size, q.intervals.length, `${id} has no duplicate tones`);
   }
+});
+
+test('tunings name their open strings correctly', () => {
+  for (const [id, tuning] of Object.entries(TUNINGS)) {
+    assert.equal(tuning.notes.length, 6, id);
+    tuning.strings.forEach((name, s) => assert.equal(parseNote(name).pc, tuning.notes[s] % 12, `${id} string ${s}`));
+  }
+  assert.equal(TUNINGS.dropD.notes[0], TUNINGS.standard.notes[0] - 2);
 });
 
 test('diatonic check', () => {

@@ -1,7 +1,8 @@
 // Web Audio playback: each genre's effect chain, and the scheduling of a performance's notes
 // on recorded guitar samples.
 
-import { SOUNDS } from './sounds.js';
+import { GENRES } from './genres.js';
+import { SOUNDS, instrumentsOf, takesOf } from './sounds.js';
 import { impulseResponse, seededRandom, vinylNoise } from './dsp.js';
 import { buildPerformance, previewNotes } from './performance.js';
 import { SampleBank, notesOf } from './samples.js';
@@ -9,13 +10,14 @@ import { SampleBank, notesOf } from './samples.js';
 const NOTE_LEVEL = 0.5;
 const RELEASE = 0.12;
 const MUTED_RELEASE = 0.06;
+const PALM_MUTE = 700;
 const LOOKAHEAD = 0.3;
-const SINGLE_TAKE = [{ pan: 0, offset: 0, detune: 1 }];
-// A second take, slightly late and detuned, on the other side: the width of a double-tracked guitar.
-const DOUBLE_TAKES = [
-  { pan: -0.6, offset: 0, detune: 1 },
-  { pan: 0.6, offset: 0.016, detune: 1.0025 },
-];
+
+/** Loads every recording a set of diagrams needs in a genre's sound and tuning. */
+function loadNotes(bank, genreId, fretsList) {
+  const notes = notesOf(fretsList, GENRES[genreId].tuning);
+  return Promise.all(instrumentsOf(SOUNDS[genreId]).map((instrument) => bank.load(instrument, notes)));
+}
 
 const fretsOf = (progression) => progression.chords.map((c) => c.frets);
 
@@ -68,10 +70,10 @@ function buildChain(ctx, sound, destination) {
 
   if (sound.wobble) then(modulatedDelay(ctx, 0.01, sound.wobble.rate, sound.wobble.depth, oscillators));
   then(filter(ctx, 'highpass', sound.tone.highpass, 0.7));
-  if (sound.tone.mid) {
-    const mid = filter(ctx, 'peaking', sound.tone.mid.freq, 0.9);
-    mid.gain.value = sound.tone.mid.gain;
-    then(mid);
+  for (const peak of sound.tone.peaks || []) {
+    const eq = filter(ctx, 'peaking', peak.freq, peak.q);
+    eq.gain.value = peak.gain;
+    then(eq);
   }
   then(filter(ctx, 'lowpass', sound.tone.lowpass, 0.7));
 
@@ -151,27 +153,27 @@ function startNoise(ctx, level, destination) {
 /** Schedules notes (times relative to `startAt`) into `bus`; the samples must be loaded. */
 function scheduleNotes(ctx, bus, notes, startAt, sound, bank, humanize = true) {
   const sources = [];
+  const takes = takesOf(sound);
   for (const note of notes) {
-    const sample = bank.get(sound.instrument, note.midi);
-    const takes = sound.double ? DOUBLE_TAKES : SINGLE_TAKE;
     const jitter = humanize ? (Math.random() - 0.5) * 0.008 : 0;
-    const level =
-      NOTE_LEVEL * sample.gain * note.velocity * (sound.double ? 0.75 : 1) * (humanize ? 0.92 + Math.random() * 0.16 : 1);
+    const level = NOTE_LEVEL * note.velocity * (takes.length > 1 ? 0.75 : 1) * (humanize ? 0.92 + Math.random() * 0.16 : 1);
 
     for (const take of takes) {
+      const sample = bank.get(take.instrument, note.midi);
       const start = Math.max(ctx.currentTime, startAt + note.time + take.offset + jitter);
       const end = start + note.duration;
       const source = ctx.createBufferSource();
       source.buffer = sample.buffer;
       source.playbackRate.value = sample.rate * take.detune;
       const envelope = ctx.createGain();
+      const gain = level * sample.gain;
       envelope.gain.setValueAtTime(0, start);
-      envelope.gain.linearRampToValueAtTime(level, start + 0.002);
-      envelope.gain.setValueAtTime(level, end);
+      envelope.gain.linearRampToValueAtTime(gain, start + 0.002);
+      envelope.gain.setValueAtTime(gain, end);
       envelope.gain.setTargetAtTime(0, end, (note.muted ? MUTED_RELEASE : RELEASE) / 4);
       if (note.muted) {
         // Palm mute: the hand on the bridge dulls the string.
-        const dull = filter(ctx, 'lowpass', 700, 0.6);
+        const dull = filter(ctx, 'lowpass', sound.palmMute || PALM_MUTE, 0.6);
         source.connect(dull);
         dull.connect(envelope);
       } else {
@@ -233,7 +235,7 @@ export class Player {
     const session = { progression, mode, bpm, loop, onChord, onEnd, sources: [], cycles: [], timers: [], chord: -1 };
     this.session = session;
     try {
-      await this.bank.load(sound.instrument, notesOf(fretsOf(progression)));
+      await loadNotes(this.bank, progression.genre, fretsOf(progression));
     } catch (error) {
       if (this.session === session) this.stop();
       throw error;
@@ -325,7 +327,7 @@ export class Player {
     const ctx = this.ensure(progression.genre);
     const sound = SOUNDS[progression.genre];
     const frets = progression.chords[index].frets;
-    await this.bank.load(sound.instrument, notesOf([frets]));
+    await loadNotes(this.bank, progression.genre, [frets]);
     if (this.genre !== progression.genre) return;
     this.chain.setTempo(bpm);
     const bus = ctx.createGain();
@@ -341,7 +343,7 @@ export async function renderOffline(progression, { mode, bpm, tail = 2, sampleRa
   const ctx = new OfflineAudioContext(2, Math.ceil((perf.duration + tail) * sampleRate), sampleRate);
   const sound = SOUNDS[progression.genre];
   const bank = new SampleBank(ctx);
-  await bank.load(sound.instrument, notesOf(fretsOf(progression)));
+  await loadNotes(bank, progression.genre, fretsOf(progression));
   const chain = buildChain(ctx, sound, createMaster(ctx));
   chain.setTempo(bpm);
   const bus = ctx.createGain();

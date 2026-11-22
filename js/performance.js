@@ -2,16 +2,23 @@
 // Pure data, so tests can check that only the right notes play at the right times.
 
 import { GENRES } from './genres.js';
-import { STANDARD_TUNING } from './theory.js';
+import { TUNINGS } from './theory.js';
 
 const MIN_DURATION = 0.02;
 
-function stringsOf(frets) {
+function stringsOf(frets, tuning) {
+  const open = TUNINGS[tuning].notes;
   const strings = [];
   frets.forEach((fret, string) => {
-    if (fret != null) strings.push({ string, midi: STANDARD_TUNING[string] + fret });
+    if (fret != null) strings.push({ string, midi: open[string] + fret });
   });
   return strings;
+}
+
+/** The strings a strum hits: all, the top four on an upstroke, or the two lowest for a chug. */
+function strummed(strings, ev) {
+  if (ev.strings === 'low') return strings.slice(0, 2);
+  return ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings;
 }
 
 /**
@@ -28,11 +35,10 @@ export function buildPerformance(progression, { mode, bpm }) {
 
   progression.chords.forEach((chord, index) => {
     const start = index * bar;
-    const strings = stringsOf(chord.frets);
+    const strings = stringsOf(chord.frets, genre.tuning);
     if (mode === 'strum') {
       for (const ev of genre.strum.pattern) {
-        // Upstrokes catch the top strings only.
-        const hits = ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings;
+        const hits = strummed(strings, ev);
         const at = swing(ev.at);
         hits.forEach((n, k) => {
           notes.push({
@@ -82,8 +88,9 @@ export function buildPerformance(progression, { mode, bpm }) {
 
 /** One slow downstroke of a single chord, for clicking a diagram. */
 export function previewNotes(frets, genreId) {
-  const spread = Math.max(GENRES[genreId].strum.spread, 0.014);
-  return stringsOf(frets).map((n, k) => ({
+  const genre = GENRES[genreId];
+  const spread = Math.max(genre.strum.spread, 0.014);
+  return stringsOf(frets, genre.tuning).map((n, k) => ({
     time: k * spread,
     duration: 2.4,
     midi: n.midi,

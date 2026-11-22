@@ -31,14 +31,14 @@ export function keysFor(genre, template) {
 export function chooseVoicings(genre, chords, rng = Math.random) {
   const style = genre.voicing;
   const options = chords.map((chord) => {
-    let shapes = voicingsFor(chord.rootPc, chord.quality);
+    let shapes = voicingsFor(chord.rootPc, chord.quality, genre.tuning);
     if (style.maxBassString != null) {
-      const low = shapes.filter((frets) => describe(frets).bassString <= style.maxBassString);
+      const low = shapes.filter((frets) => describe(frets, genre.tuning).bassString <= style.maxBassString);
       if (low.length) shapes = low;
     }
     return shapes
       .map((frets) => {
-        const d = describe(frets);
+        const d = describe(frets, genre.tuning);
         let cost =
           style.centerWeight * Math.abs(d.position - style.center) +
           style.open * d.openStrings +
@@ -83,7 +83,7 @@ export function buildProgression(genreId, templateId, key, frets = null, rng = M
     key: { tonic: key.tonic, mode: key.mode },
     chords: chords.map((chord, i) => {
       const given = frets && frets[i];
-      const keep = given && isPlayable(given) && matchesChord(given, chord.rootPc, chord.quality);
+      const keep = given && isPlayable(given) && matchesChord(given, chord.rootPc, chord.quality, genre.tuning);
       return { ...chord, frets: keep ? given : chosen[i] };
     }),
   };

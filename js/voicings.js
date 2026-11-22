@@ -1,9 +1,11 @@
 // Guitar chord shapes, and the checks that a shape really is the chord it claims to be.
-// Frets are listed from the low E string to the high E string; null means the string is muted.
+// Frets are listed from the lowest string to the high E string; null means the string is muted.
+// Tunings are named as in theory.js (TUNINGS); the default is standard tuning.
 
-import { STANDARD_TUNING, QUALITIES, chordTones, mod, parseNote } from './theory.js';
+import { TUNINGS, QUALITIES, chordTones, mod, parseNote } from './theory.js';
 
 const x = null;
+const toShape = ([quality, root, frets]) => ({ quality, rootPc: parseNote(root).pc, frets });
 
 // Movable shapes, written out at one root and slid along the neck. They have no open strings.
 const MOVABLE = [
@@ -47,7 +49,7 @@ const MOVABLE = [
   ['sus2', 'E', [x, x, 2, 4, 5, 2]],
   ['sus4', 'C', [x, 3, 5, 5, 6, 3]],
   ['sus4', 'G', [3, 5, 5, 5, 3, 3]],
-].map(([quality, root, frets]) => ({ quality, rootPc: parseNote(root).pc, frets }));
+].map(toShape);
 
 // Shapes that use open strings, valid only for their own root. Several keep the top strings
 // ringing while the fretted notes move (the drones Post Rock and Shoegaze love).
@@ -121,17 +123,28 @@ const OPEN = [
   ['sus4', 'A', [x, 0, 2, 2, 3, 0]],
   ['sus4', 'E', [0, 2, 2, 2, 0, 0]],
   ['sus4', 'B', [x, 2, 4, 4, 0, 0]],
-].map(([quality, root, frets]) => ({ quality, rootPc: parseNote(root).pc, frets }));
+].map(toShape);
 
-export const SHAPES = { movable: MOVABLE, open: OPEN };
+// Drop D: the low string sounds a tone lower. Shapes that leave it muted work unchanged; power
+// chords get the one-finger shape across the three lowest strings.
+const lowStringMuted = (s) => s.frets[0] == null;
+
+export const SHAPES = {
+  standard: { movable: MOVABLE, open: OPEN },
+  dropD: {
+    movable: [toShape(['5', 'E', [2, 2, 2, x, x, x]]), ...MOVABLE.filter(lowStringMuted)],
+    open: [toShape(['5', 'D', [0, 0, 0, x, x, x]]), ...OPEN.filter(lowStringMuted)],
+  },
+};
 
 const MAX_FRET = 14;
 
 /** The notes a voicing sounds: string index, fret and MIDI pitch. */
-export function sounding(frets, tuning = STANDARD_TUNING) {
+export function sounding(frets, tuning = 'standard') {
+  const open = TUNINGS[tuning].notes;
   const notes = [];
   frets.forEach((fret, string) => {
-    if (fret != null) notes.push({ string, fret, midi: tuning[string] + fret });
+    if (fret != null) notes.push({ string, fret, midi: open[string] + fret });
   });
   return notes;
 }
@@ -195,7 +208,7 @@ export function isPlayable(frets) {
  * True when the shape sounds exactly the chord: nothing outside the chord, every required tone
  * present, and the root as the lowest note.
  */
-export function matchesChord(frets, rootPc, quality, tuning = STANDARD_TUNING) {
+export function matchesChord(frets, rootPc, quality, tuning = 'standard') {
   if (!Array.isArray(frets) || frets.length !== 6) return false;
   const notes = sounding(frets, tuning);
   if (notes.length < 3) return false;
@@ -208,9 +221,9 @@ export function matchesChord(frets, rootPc, quality, tuning = STANDARD_TUNING) {
 }
 
 /** Facts the voicing picker scores on. */
-export function describe(frets) {
+export function describe(frets, tuning = 'standard') {
   const fretted = frets.filter((f) => f != null && f > 0);
-  const notes = sounding(frets);
+  const notes = sounding(frets, tuning);
   const bass = notes.reduce((low, n) => (n.midi < low.midi ? n : low), notes[0]);
   return {
     position: fretted.length ? fretted.reduce((a, b) => a + b, 0) / fretted.length : 0,
@@ -222,12 +235,12 @@ export function describe(frets) {
 }
 
 /** Every playable voicing of a chord: open shapes for its root plus the movable shapes slid into place. */
-export function voicingsFor(rootPc, quality) {
+export function voicingsFor(rootPc, quality, tuning = 'standard') {
   const found = new Map();
-  for (const shape of OPEN) {
+  for (const shape of SHAPES[tuning].open) {
     if (shape.quality === quality && shape.rootPc === rootPc) found.set(fretsToString(shape.frets), shape.frets.slice());
   }
-  for (const shape of MOVABLE) {
+  for (const shape of SHAPES[tuning].movable) {
     if (shape.quality !== quality) continue;
     const shift = mod(rootPc - shape.rootPc, 12);
     for (const s of [shift - 12, shift, shift + 12]) {

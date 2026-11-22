@@ -4,9 +4,9 @@ import { GENRES, GENRE_IDS } from './genres.js';
 import { generateProgression } from './generator.js';
 import { diagramSVG } from './diagram.js';
 import { decodeState, encodeState } from './share.js';
-import { keyLabel, pretty } from './theory.js';
+import { TUNINGS, keyLabel, pretty } from './theory.js';
 import { Player } from './audio.js';
-import { SOUNDS } from './sounds.js';
+import { SOUNDS, instrumentsOf } from './sounds.js';
 import { notesOf, prefetch } from './samples.js';
 
 const $ = (id) => document.getElementById(id);
@@ -31,6 +31,8 @@ function renderGenres() {
 
 function render() {
   const { progression } = state;
+  const tuningId = GENRES[state.genre].tuning;
+  const tuning = TUNINGS[tuningId];
   document.body.dataset.genre = state.genre;
   for (const button of $('genres').children) {
     button.setAttribute('aria-pressed', String(button.dataset.genre === state.genre));
@@ -38,6 +40,8 @@ function render() {
   $('blurb').textContent = GENRES[state.genre].blurb;
   $('key').textContent = `Key of ${pretty(keyLabel(progression.key))}`;
   $('romans').textContent = progression.chords.map((c) => pretty(c.roman)).join(' – ');
+  $('tuning').hidden = tuningId === 'standard';
+  $('tuning').textContent = `${tuning.name} tuning: ${tuning.strings.join(' ')}`;
   $('chords').replaceChildren(
     ...progression.chords.map((chord, index) => {
       const name = pretty(chord.name);
@@ -46,7 +50,7 @@ function render() {
       item.innerHTML = `
         <button type="button" class="chord" aria-label="${name} (${roman}), play this chord">
           <span class="chord-name">${name}</span>
-          ${diagramSVG(chord.frets, `${name}: ${fretLabel(chord.frets)}`)}
+          ${diagramSVG(chord.frets, `${name}: ${fretLabel(chord.frets)}`, tuningId)}
           <span class="chord-roman">${roman}</span>
           <span class="chord-frets" aria-hidden="true">${fretLabel(chord.frets)}</span>
         </button>`;
@@ -58,7 +62,11 @@ function render() {
   $('tempo-value').textContent = state.bpm;
   updateLink();
   // Download the notes now, so pressing play doesn't have to wait for them.
-  prefetch(SOUNDS[state.genre].instrument, notesOf(progression.chords.map((c) => c.frets)));
+  const notes = notesOf(
+    progression.chords.map((c) => c.frets),
+    tuningId,
+  );
+  for (const instrument of instrumentsOf(SOUNDS[state.genre])) prefetch(instrument, notes);
 }
 
 function updateLink() {

@@ -2,7 +2,9 @@
 //
 // Progressions are Roman numerals relative to the tonic ("bVI" = the chord on the lowered sixth
 // degree), each with a chord quality from theory.js. Lowercase numerals are minor chords.
-// Rhythms are in beats of a 4/4 bar; one chord lasts one bar.
+// Rhythms are in beats of a 4/4 bar; one chord lasts one bar. A strum hits every string of the
+// shape, an upstroke the top four, and `strings: 'low'` the two lowest. `tuning` names an entry
+// of TUNINGS in theory.js.
 
 const eighths = (vel = 1, off = 0.8) =>
   [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((at) => ({ at, dir: 'down', len: 0.46, vel: at % 1 ? off : vel }));
@@ -13,6 +15,7 @@ export const GENRES = {
     blurb: 'Lush 9ths and 13ths, chromatic turns and a lazy, behind-the-beat groove.',
     tempo: 76,
     swing: 0.1,
+    tuning: 'standard',
     keys: {
       major: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'G', 'Ab', 'A', 'Bb'],
       minor: ['A', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G'],
@@ -46,6 +49,7 @@ export const GENRES = {
     blurb: 'Mellow sevenths sliding down in steps, warm and a little worn.',
     tempo: 72,
     swing: 0.16,
+    tuning: 'standard',
     keys: {
       major: ['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb'],
       minor: ['A', 'B', 'C', 'D', 'E', 'F#', 'G'],
@@ -76,6 +80,7 @@ export const GENRES = {
     blurb: 'Power chords, three-chord-trick energy and relentless downstrokes.',
     tempo: 168,
     swing: 0,
+    tuning: 'standard',
     keys: {
       major: ['E', 'A', 'D', 'G', 'C', 'B', 'F'],
       minor: ['A', 'E', 'B', 'D', 'F#'],
@@ -100,6 +105,7 @@ export const GENRES = {
     blurb: 'Ringing add9 and sus chords over open strings that build, shimmer and echo.',
     tempo: 108,
     swing: 0,
+    tuning: 'standard',
     keys: {
       major: ['G', 'D', 'A', 'E', 'C'],
       minor: ['E', 'B', 'A'],
@@ -130,6 +136,7 @@ export const GENRES = {
     blurb: 'Open strings droning through borrowed chords under a wall of fuzz and reverb.',
     tempo: 92,
     swing: 0,
+    tuning: 'standard',
     keys: {
       major: ['E', 'A', 'D', 'G'],
       minor: ['E', 'A', 'B'],
@@ -158,12 +165,14 @@ export const GENRES = {
 
   metalcore: {
     name: 'Metalcore',
-    blurb: 'Minor-key power chords, Phrygian half-steps and palm-muted chugs.',
+    blurb: 'Drop D power chords, Phrygian half-steps and palm-muted chugs on the open low string.',
     tempo: 140,
     swing: 0,
+    // The low string tuned down to D: one-finger power chords and an open D to chug on.
+    tuning: 'dropD',
     keys: {
       major: [],
-      minor: ['E', 'E', 'E', 'F#', 'G', 'A', 'B', 'C', 'D'],
+      minor: ['D', 'D', 'D', 'E', 'F', 'G'],
     },
     templates: [
       { id: 'aeolian-anthem', mode: 'minor', chords: ['i:5', 'bVI:5', 'bIII:5', 'bVII:5'] },
@@ -174,18 +183,19 @@ export const GENRES = {
       { id: 'minor-loop', mode: 'minor', chords: ['i:5', 'bIII:5', 'bVII:5', 'iv:5'] },
     ],
     voicing: { center: 2, centerWeight: 0.2, open: -0.3, move: 0.3, maxBassString: 1, bassString: 0, bassPenalty: 0.9 },
+    // Full power chords on the accents; palm-muted chugs in between on the two lowest strings.
     strum: {
       spread: 0.004,
       pattern: [
-        { at: 0, dir: 'down', len: 1, vel: 1 },
-        { at: 1, dir: 'down', len: 0.22, vel: 0.85, mute: true },
-        { at: 1.25, dir: 'down', len: 0.22, vel: 0.8, mute: true },
-        { at: 1.5, dir: 'down', len: 0.5, vel: 0.95 },
+        { at: 0, dir: 'down', len: 0.75, vel: 1 },
+        { at: 0.75, dir: 'down', len: 0.2, vel: 0.8, mute: true, strings: 'low' },
+        { at: 1, dir: 'down', len: 0.2, vel: 0.85, mute: true, strings: 'low' },
+        { at: 1.5, dir: 'down', len: 0.2, vel: 0.85, mute: true, strings: 'low' },
+        { at: 1.75, dir: 'down', len: 0.2, vel: 0.8, mute: true, strings: 'low' },
         { at: 2, dir: 'down', len: 1, vel: 1 },
-        { at: 3, dir: 'down', len: 0.22, vel: 0.85, mute: true },
-        { at: 3.25, dir: 'down', len: 0.22, vel: 0.8, mute: true },
-        { at: 3.5, dir: 'down', len: 0.22, vel: 0.85, mute: true },
-        { at: 3.75, dir: 'down', len: 0.22, vel: 0.8, mute: true },
+        { at: 3, dir: 'down', len: 0.2, vel: 0.85, mute: true, strings: 'low' },
+        { at: 3.25, dir: 'down', len: 0.2, vel: 0.8, mute: true, strings: 'low' },
+        { at: 3.5, dir: 'down', len: 0.5, vel: 0.95 },
       ],
     },
     arpeggio: { step: 0.25, sequence: [0, 2, 5, 2, 0, 2, 5, 2, 0, 2, 5, 2, 0, 5, 2, 5], ring: 0.5, vel: 0.85 },

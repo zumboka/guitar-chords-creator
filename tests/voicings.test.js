@@ -16,32 +16,44 @@ import {
 const x = null;
 const label = (shape) => `${shape.quality} @${shape.rootPc} ${fretsToString(shape.frets)}`;
 
-test('every shape in the library is the chord it claims and can be played', () => {
-  for (const shape of [...SHAPES.movable, ...SHAPES.open]) {
-    assert.ok(matchesChord(shape.frets, shape.rootPc, shape.quality), `${label(shape)} spells its chord`);
-    assert.ok(isPlayable(shape.frets), `${label(shape)} is playable`);
+test('every shape in the library is the chord it claims and can be played, in its tuning', () => {
+  for (const [tuning, library] of Object.entries(SHAPES)) {
+    for (const shape of [...library.movable, ...library.open]) {
+      assert.ok(matchesChord(shape.frets, shape.rootPc, shape.quality, tuning), `${tuning} ${label(shape)} spells its chord`);
+      assert.ok(isPlayable(shape.frets), `${tuning} ${label(shape)} is playable`);
+    }
   }
 });
 
 test('movable shapes have no open strings', () => {
-  for (const shape of SHAPES.movable) assert.ok(!shape.frets.includes(0), label(shape));
+  for (const library of Object.values(SHAPES)) {
+    for (const shape of library.movable) assert.ok(!shape.frets.includes(0), label(shape));
+  }
 });
 
-test('every quality the genres use has shapes for all twelve roots', () => {
+test('every quality the genres use has shapes for all twelve roots, in the tuning of each genre', () => {
   const used = new Set();
   for (const genre of Object.values(GENRES)) {
-    for (const t of genre.templates) for (const c of t.chords) used.add(parseRoman(c).quality);
+    for (const t of genre.templates) for (const c of t.chords) used.add(`${genre.tuning}/${parseRoman(c).quality}`);
   }
-  for (const quality of used) {
+  for (const pair of used) {
+    const [tuning, quality] = pair.split('/');
     for (let root = 0; root < 12; root++) {
-      const found = voicingsFor(root, quality);
-      assert.ok(found.length > 0, `${quality} on pitch class ${root}`);
+      const found = voicingsFor(root, quality, tuning);
+      assert.ok(found.length > 0, `${pair} on pitch class ${root}`);
       for (const frets of found) {
-        assert.ok(matchesChord(frets, root, quality), `${quality}@${root} ${fretsToString(frets)} spells the chord`);
-        assert.ok(isPlayable(frets), `${quality}@${root} ${fretsToString(frets)} is playable`);
+        assert.ok(matchesChord(frets, root, quality, tuning), `${pair}@${root} ${fretsToString(frets)} spells the chord`);
+        assert.ok(isPlayable(frets), `${pair}@${root} ${fretsToString(frets)} is playable`);
       }
     }
   }
+});
+
+test('Drop D: the open low strings are a D5, and power chords take one finger', () => {
+  assert.ok(matchesChord([0, 0, 0, x, x, x], 2, '5', 'dropD'));
+  assert.ok(!matchesChord([0, 0, 0, x, x, x], 2, '5'), 'not in standard tuning');
+  assert.ok(voicingsFor(4, '5', 'dropD').some((f) => fretsToString(f) === '222xxx'), 'E5 with one finger');
+  assert.ok(!voicingsFor(4, '5', 'dropD').some((f) => f[0] === 0), 'no open low E in Drop D');
 });
 
 test('the chord check rejects wrong notes, missing tones and a wrong bass', () => {

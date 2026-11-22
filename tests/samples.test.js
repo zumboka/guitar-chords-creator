@@ -4,8 +4,8 @@ import { readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { GENRES } from '../js/genres.js';
 import { notesOf, sampleUrl } from '../js/samples.js';
-import { SOUNDS } from '../js/sounds.js';
-import { SAMPLE_RANGE, TUNING } from '../js/tuning.js';
+import { SOUNDS, instrumentsOf } from '../js/sounds.js';
+import { CENTS_SHARP, SAMPLE_RANGE } from '../js/recordings.js';
 import { SHAPES, voicingsFor } from '../js/voicings.js';
 import { QUALITIES } from '../js/theory.js';
 
@@ -14,11 +14,13 @@ const file = (instrument, midi) => fileURLToPath(new URL(sampleUrl(instrument, m
 
 test('every genre has a sound with a recorded instrument', () => {
   assert.deepEqual(Object.keys(SOUNDS).sort(), Object.keys(GENRES).sort());
-  for (const sound of Object.values(SOUNDS)) assert.ok(TUNING[sound.instrument], sound.instrument);
+  for (const sound of Object.values(SOUNDS)) {
+    for (const instrument of instrumentsOf(sound)) assert.ok(CENTS_SHARP[instrument], instrument);
+  }
 });
 
 test('every instrument has an MP3 for every note in the range', () => {
-  for (const instrument of new Set(Object.values(SOUNDS).map((s) => s.instrument))) {
+  for (const instrument of new Set(Object.values(SOUNDS).flatMap(instrumentsOf))) {
     for (let midi = SAMPLE_RANGE.low; midi <= SAMPLE_RANGE.high; midi++) {
       const path = file(instrument, midi);
       assert.ok(statSync(path).size > 1000, `${instrument}/${midi}.mp3 has content`);
@@ -30,19 +32,21 @@ test('every instrument has an MP3 for every note in the range', () => {
 });
 
 test('the tuning table covers the range with small corrections', () => {
-  for (const [instrument, cents] of Object.entries(TUNING)) {
+  for (const [instrument, cents] of Object.entries(CENTS_SHARP)) {
     assert.equal(cents.length, SAMPLE_RANGE.high - SAMPLE_RANGE.low + 1, instrument);
     for (const c of cents) assert.ok(Number.isInteger(c) && Math.abs(c) <= 30, `${instrument}: ${c} cents`);
   }
 });
 
-test('every note any chord shape can play has a recording', () => {
-  const frets = SHAPES.open.map((s) => s.frets);
-  for (const quality of Object.keys(QUALITIES)) {
-    for (let rootPc = 0; rootPc < 12; rootPc++) frets.push(...voicingsFor(rootPc, quality));
-  }
-  for (const midi of notesOf(frets)) {
-    assert.ok(midi >= SAMPLE_RANGE.low && midi <= SAMPLE_RANGE.high, `MIDI ${midi}`);
+test('every note any chord shape can play, in any tuning, has a recording', () => {
+  for (const [tuning, library] of Object.entries(SHAPES)) {
+    const frets = library.open.map((s) => s.frets);
+    for (const quality of Object.keys(QUALITIES)) {
+      for (let rootPc = 0; rootPc < 12; rootPc++) frets.push(...voicingsFor(rootPc, quality, tuning));
+    }
+    for (const midi of notesOf(frets, tuning)) {
+      assert.ok(midi >= SAMPLE_RANGE.low && midi <= SAMPLE_RANGE.high, `${tuning}: MIDI ${midi}`);
+    }
   }
 });
 
@@ -54,4 +58,5 @@ test('notesOf lists each sounding note once, lowest first', () => {
     ]),
     [43, 47, 48, 50, 52, 55, 59, 60, 64, 67],
   );
+  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropD'), [38, 45, 50]);
 });

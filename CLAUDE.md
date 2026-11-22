@@ -14,9 +14,9 @@ The Godot asset-generation rules in the parent `C:\Users\malte\CLAUDE.md` don't 
 - Every chord shape must pass `matchesChord` and `isPlayable` in `js/voicings.js`; the tests enforce it for the whole library and for 1,500 generated progressions per genre.
 - A progression is exactly four different chords. New progressions go in `js/genres.js` as Roman numerals with a chord quality (`'ii:m9'`); a quality a genre uses needs movable shapes so every key works.
 - Genre rules live in `tests/generator.test.js` (`RULES`); keep them in step with `js/genres.js`.
-- Standard tuning everywhere (user's decision, 2026-11-22).
+- Standard tuning, except Metalcore in Drop D (user's OK, 2026-11-22). Each genre names its tuning in `js/genres.js`; the shapes for each tuning are `SHAPES` in `js/voicings.js`.
 - Diagrams follow the user's reference chord boxes: name on top, `o` / `x` above a thick nut, dots, a barre bar, a `5fr` label higher up the neck.
-- Sound comes from recordings in `audio/<instrument>/<midi>.mp3` (MIDI 40 to 78), not synthesis (the synthesised first version sounded poor to the user). `js/tuning.js` holds each recording's measured tuning; re-measure it when a recording is added or replaced. Keep the CC BY-SA attribution in `audio/README.md` and the page footer.
+- Sound comes from recordings in `audio/<instrument>/<midi>.mp3` (MIDI 38 to 78), not synthesis (the synthesised first version sounded poor to the user). `js/recordings.js` holds each recording's measured tuning; re-measure it when a recording is added or replaced. Keep the CC BY-SA attribution in `audio/README.md` and the page footer.
 - Loudness per genre is set by `level` in `js/sounds.js`, calibrated to about -19.5 dBFS RMS with `renderOffline` from `js/audio.js`; recalibrate after changing a genre's instrument or effects.
 - `docs/spec.md` is the agreed plan; update it when a decision changes.
 

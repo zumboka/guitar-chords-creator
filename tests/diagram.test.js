@@ -49,6 +49,14 @@ test('every generated diagram fits its five-fret box', () => {
   }
 });
 
+test('Drop D diagrams name the strings and highlight the retuned one', () => {
+  const svg = diagramSVG([0, 0, 0, x, x, x], 'D5', 'dropD');
+  assert.equal(count(svg, 'tuning-note'), 5);
+  assert.equal(count(svg, 'tuning-note retuned'), 1);
+  assert.ok(svg.includes('>D</text>'));
+  assert.equal(count(diagramSVG([0, 2, 2, x, x, x], 'E5'), 'tuning-note'), 0, 'standard tuning needs no labels');
+});
+
 test('labels are escaped', () => {
   assert.ok(diagramSVG([0, 2, 2, 0, 0, 0], '"<Em>"').includes('aria-label="&quot;&lt;Em&gt;&quot;"'));
 });

@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GENRE_IDS } from '../js/genres.js';
+import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { generateProgression } from '../js/generator.js';
 import { buildPerformance, previewNotes } from '../js/performance.js';
-import { chordTones, mod, STANDARD_TUNING } from '../js/theory.js';
+import { TUNINGS, chordTones, mod } from '../js/theory.js';
 import { seededRandom } from '../js/dsp.js';
 
 const EPS = 1e-9;
@@ -22,7 +22,7 @@ for (const id of GENRE_IDS) {
         for (const n of perf.notes) {
           const chord = p.chords[n.chord];
           // The note is a fretted string of this chord's diagram...
-          assert.equal(n.midi, STANDARD_TUNING[n.string] + chord.frets[n.string]);
+          assert.equal(n.midi, TUNINGS[GENRES[id].tuning].notes[n.string] + chord.frets[n.string]);
           // ...and therefore a tone of the chord.
           assert.ok(chordTones(chord.rootPc, chord.quality).includes(mod(n.midi, 12)));
           assert.ok(n.time >= n.chord * perf.bar - EPS && n.time < (n.chord + 1) * perf.bar, 'starts in its bar');
@@ -51,6 +51,24 @@ for (const id of GENRE_IDS) {
     });
   }
 }
+
+test('metalcore chugs palm-mute the two lowest strings between full chords', () => {
+  const rng = seededRandom(21);
+  for (let run = 0; run < 30; run++) {
+    const p = generateProgression('metalcore', rng);
+    const perf = buildPerformance(p, { mode: 'strum', bpm: 140 });
+    const muted = perf.notes.filter((n) => n.muted);
+    assert.ok(muted.length > 0);
+    for (const n of muted) {
+      const lowest = p.chords[n.chord].frets.flatMap((f, s) => (f == null ? [] : [s])).slice(0, 2);
+      assert.ok(lowest.includes(n.string), `chug on string ${n.string}`);
+    }
+    p.chords.forEach((chord, i) => {
+      const accented = new Set(perf.notes.filter((n) => n.chord === i && !n.muted).map((n) => n.string));
+      for (const [s, f] of chord.frets.entries()) if (f != null) assert.ok(accented.has(s), 'accents hit the whole chord');
+    });
+  }
+});
 
 test('clicking a diagram strums each of its strings once, low to high', () => {
   const notes = previewNotes([null, 3, 2, 0, 1, 0], 'lofi');

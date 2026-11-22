@@ -227,6 +227,24 @@ body {
   font: 600 11px ui-sans-serif, system-ui, sans-serif;
 }
 
+.diagram .tuning-note {
+  fill: #7a766c;
+  font: 600 10px ui-sans-serif, system-ui, sans-serif;
+  text-anchor: middle;
+}
+
+.diagram .tuning-note.retuned {
+  fill: var(--accent);
+  font-weight: 800;
+}
+
+.tuning {
+  margin: 4px 0 0;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .hint {
   margin: 14px 4px 0;
   color: var(--muted);

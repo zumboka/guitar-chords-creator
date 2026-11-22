@@ -84,12 +84,15 @@ for (const id of GENRE_IDS) {
       assert.equal(p.chords.length, 4);
       assert.equal(new Set(p.chords.map((c) => c.name)).size, 4, 'four different chords');
       for (const c of p.chords) {
-        assert.ok(matchesChord(c.frets, c.rootPc, c.quality), `${c.name} diagram spells the chord`);
+        assert.ok(matchesChord(c.frets, c.rootPc, c.quality, GENRES[id].tuning), `${c.name} diagram spells the chord`);
         assert.ok(isPlayable(c.frets), `${c.name} diagram is playable`);
         assert.match(c.root, /^[A-G][#b]?$/, `${c.name} has a plain root name`);
         assert.ok(!['Cb', 'Fb', 'E#', 'B#'].includes(c.root), `${c.name} uses the common enharmonic name`);
         if (id === 'punk' || id === 'metalcore') {
           assert.ok(c.frets[0] != null || c.frets[1] != null, `${c.name} power chord sits on the low strings`);
+        }
+        if (id === 'metalcore' && c.frets[0] != null) {
+          assert.ok(c.frets[1] === c.frets[0] && c.frets[2] === c.frets[0], `${c.name}: one-finger Drop D shape`);
         }
       }
       assert.ok(RULES[id].check(p), `${id} progression ${p.chords.map((c) => c.name).join(' ')} ${RULES[id].why}`);
@@ -135,6 +138,18 @@ test('the example progressions from the plan come out as promised', () => {
   assert.deepEqual(names('post-rock', 'open-four', 'G', 'major'), ['Gmaj7', 'Em(add9)', 'Cadd9', 'Dsus4']);
   assert.deepEqual(names('shoegaze', 'drone-mixture', 'E', 'major'), ['Emaj7', 'Cmaj7', 'Aadd9', 'Am(add9)']);
   assert.deepEqual(names('metalcore', 'aeolian-anthem', 'E', 'minor'), ['E5', 'C5', 'G5', 'D5']);
+});
+
+test('metalcore in D minor chugs on the open low D', () => {
+  const rng = seededRandom(9);
+  for (let i = 0; i < 20; i++) {
+    const p = buildProgression('metalcore', 'aeolian-anthem', { tonic: 'D', mode: 'minor' }, null, rng);
+    assert.deepEqual(
+      p.chords.map((c) => c.name),
+      ['D5', 'Bb5', 'F5', 'C5'],
+    );
+    assert.deepEqual(p.chords[0].frets, [0, 0, 0, null, null, null]);
+  }
 });
 
 test('shoegaze in E keeps the open top strings ringing through the drone progression', () => {

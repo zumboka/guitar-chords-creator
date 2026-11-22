@@ -1,6 +1,8 @@
-// Chord-box diagrams as SVG: strings left (low E) to right, o / x above a thick nut,
+// Chord-box diagrams as SVG: strings left (lowest) to right, o / x above a thick nut,
 // dots on the frets, a bar for barre chords and a fret label ("5fr") higher up the neck.
+// Outside standard tuning the string names go underneath, the retuned ones highlighted.
 
+import { TUNINGS } from './theory.js';
 import { findBarre } from './voicings.js';
 
 const FRETS = 5;
@@ -11,6 +13,7 @@ const TOP = 34;
 const FRET_HEIGHT = 22;
 const WIDTH = 128;
 const HEIGHT = TOP + FRETS * FRET_HEIGHT + 6;
+const TUNING_ROW = 16;
 
 const escape = (text) =>
   String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -22,7 +25,7 @@ export function baseFret(frets) {
   return Math.min(...fretted);
 }
 
-export function diagramSVG(frets, label = '') {
+export function diagramSVG(frets, label = '', tuning = 'standard') {
   const base = baseFret(frets);
   const sx = (s) => LEFT + s * STRING_GAP;
   const fy = (f) => TOP + (f - base + 0.5) * FRET_HEIGHT;
@@ -62,8 +65,18 @@ export function diagramSVG(frets, label = '') {
     parts.push(`<circle class="dot" cx="${sx(s)}" cy="${fy(f)}" r="6.6"/>`);
   });
 
+  let height = HEIGHT;
+  if (tuning !== 'standard') {
+    const y = TOP + FRETS * FRET_HEIGHT + 14;
+    TUNINGS[tuning].strings.forEach((name, s) => {
+      const retuned = TUNINGS[tuning].notes[s] !== TUNINGS.standard.notes[s];
+      parts.push(`<text class="tuning-note${retuned ? ' retuned' : ''}" x="${sx(s)}" y="${y}">${name}</text>`);
+    });
+    height += TUNING_ROW;
+  }
+
   return (
-    `<svg class="diagram" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="${escape(label)}">` +
+    `<svg class="diagram" viewBox="0 0 ${WIDTH} ${height}" role="img" aria-label="${escape(label)}">` +
     parts.join('') +
     '</svg>'
   );

@@ -8,8 +8,13 @@ const SCALES = {
   minor: [0, 2, 3, 5, 7, 8, 10],
 };
 
-/** Standard tuning (E A D G B E), low string first, as MIDI note numbers. */
-export const STANDARD_TUNING = [40, 45, 50, 55, 59, 64];
+/** Guitar tunings, low string first: open-string MIDI notes and their names. */
+export const TUNINGS = {
+  standard: { name: 'Standard', notes: [40, 45, 50, 55, 59, 64], strings: ['E', 'A', 'D', 'G', 'B', 'E'] },
+  dropD: { name: 'Drop D', notes: [38, 45, 50, 55, 59, 64], strings: ['D', 'A', 'D', 'G', 'B', 'E'] },
+};
+
+export const STANDARD_TUNING = TUNINGS.standard.notes;
 
 export const mod = (n, m) => ((n % m) + m) % m;
 
