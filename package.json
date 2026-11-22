@@ -1,0 +1,11 @@
+{
+  "name": "guitar-chords-creator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generate genre-true four-chord guitar progressions, see them as chord diagrams and hear them strummed or picked.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "python -m http.server 8000"
+  }
+}
