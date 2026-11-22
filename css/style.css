@@ -336,6 +336,20 @@ input[type='checkbox'] {
   filter: brightness(1.08);
 }
 
+.button[aria-busy='true'] {
+  cursor: progress;
+}
+
+.button[aria-busy='true'] svg {
+  animation: loading 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes loading {
+  to {
+    opacity: 0.25;
+  }
+}
+
 .button.subtle {
   border-color: transparent;
   background: transparent;

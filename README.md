@@ -10,7 +10,7 @@ Generate four-chord guitar progressions that actually sound like your genre, see
 - **Playback** strummed (with a rhythm typical of the genre) or as an arpeggio, with tempo, loop, and click-a-chord to hear one on its own.
 - **Share links:** the URL holds the exact progression and diagrams.
 
-Standard tuning throughout. The guitar is synthesised in the browser (Karplus-Strong plucked strings plus a per-genre amp and effects chain), so there are no samples to download.
+Standard tuning throughout. The sound comes from recordings of real electric guitars (clean, jazz, overdriven and distorted), one per note, tuned and levelled as they load, with effects per genre: chorus, delay, reverb, and tape wobble with vinyl crackle for LoFi.
 
 ## How the chords fit the genre
 
@@ -33,7 +33,7 @@ Each genre has 5 to 8 progression patterns in Roman numerals (`js/genres.js`). O
 - every shape is playable: a stretch of at most 4 frets and at most 4 fingers;
 - every progression has four different chords and follows its genre's rules, over 1,500 random progressions per genre;
 - playback only ever plays the diagram's own notes, inside the chord's bar, one note per string at a time;
-- the synthesised strings are in tune, and share links survive a round trip.
+- every note a chord shape can reach has a recording with a tuning correction, and share links survive a round trip.
 
 ## Run it locally
 
@@ -54,11 +54,18 @@ js/genres.js       progressions, keys, voicing taste, tempo and rhythms per genr
 js/generator.js    picks a progression and its shapes
 js/diagram.js      chord-box SVG
 js/performance.js  turns a progression into timed notes (strum / arpeggio)
-js/dsp.js          plucked string, distortion, reverb and vinyl noise
-js/sounds.js       each genre's tone
+js/samples.js      loads the recorded notes
+js/tuning.js       measured tuning of every recording
+js/dsp.js          sample trimming and levelling, reverb and vinyl noise
+js/sounds.js       each genre's instrument and effects
 js/audio.js        Web Audio playback
+audio/             the guitar recordings (see audio/README.md)
 js/share.js        share links
 js/main.js         page wiring
 tests/             node --test
 docs/spec.md       the plan this was built from
 ```
+
+## Credits
+
+Guitar recordings: the Musyng Kite soundfont via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts), licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Details in [audio/README.md](audio/README.md).

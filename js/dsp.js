@@ -1,7 +1,5 @@
 // Sound building blocks as plain arrays, so they can be tested outside the browser.
 
-export const midiToFrequency = (midi) => 440 * 2 ** ((midi - 69) / 12);
-
 /** Small seeded random number generator (mulberry32). */
 export function seededRandom(seed) {
   let a = seed >>> 0;
@@ -14,55 +12,33 @@ export function seededRandom(seed) {
   };
 }
 
+const ONSET_THRESHOLD = 0.05;
+const PRE_ROLL = 0.002;
+const LEVEL_WINDOW = 0.3;
+const TARGET_RMS = 0.1;
+const MAX_PEAK = 0.95;
+
 /**
- * A plucked string (Karplus-Strong): a burst of noise circulating in a delay line one period
- * long, losing a little energy and high end on every pass.
- * The delay line has a whole number of samples, so the pitch lands near, not on, the target;
- * the returned `frequency` is the exact pitch, to be corrected with the playback rate.
- * @param brightness 0..1, how hard and bright the pick is.
- * @param sustain seconds until the string has died away by 60 dB.
+ * How to play one recorded note: where its attack starts (the files begin with a few to 20 ms
+ * of silence, which would smear a strum), a gain that brings the first 300 ms of the note to a
+ * common level without clipping, and the playback rate that corrects its tuning.
+ * @param channels Float32Array per channel. @param cents how sharp the recording is.
  */
-export function pluck({ frequency, sampleRate, seconds, brightness = 0.5, sustain = 3, rng = Math.random }) {
-  const period = Math.max(2, Math.round(sampleRate / frequency - 0.5));
-  const length = Math.max(period * 2, Math.ceil(seconds * sampleRate));
-  const data = new Float32Array(length);
-
-  const smoothing = 0.12 + 0.86 * brightness;
-  let y = 0;
-  let mean = 0;
-  for (let i = 0; i < period; i++) {
-    y += smoothing * (rng() * 2 - 1 - y);
-    data[i] = y;
-    mean += y;
-  }
-  mean /= period;
-  for (let i = 0; i < period; i++) data[i] -= mean;
-
-  // The two-point average in the loop adds half a sample of delay.
-  const actual = sampleRate / (period + 0.5);
-  const loss = 0.001 ** (1 / (sustain * actual));
-  for (let i = period; i < length; i++) {
-    data[i] = loss * 0.5 * (data[i - period] + (i > period ? data[i - period - 1] : 0));
-  }
-
+export function sampleSettings(channels, sampleRate, cents = 0) {
+  const length = channels[0].length;
   let peak = 0;
-  for (let i = 0; i < length; i++) peak = Math.max(peak, Math.abs(data[i]));
-  if (peak > 0) for (let i = 0; i < length; i++) data[i] /= peak;
-  return { data, frequency: actual };
-}
-
-/**
- * Distortion transfer curve for a WaveShaper: tanh saturation, `amount` is the drive.
- * `asymmetry` (0..0.4) bends the curve unevenly, adding the even harmonics of a fuzz pedal.
- */
-export function driveCurve(amount, asymmetry = 0, size = 4096) {
-  const curve = new Float32Array(size);
-  const norm = Math.tanh(amount * (1 + asymmetry));
-  for (let i = 0; i < size; i++) {
-    const x = (i / (size - 1)) * 2 - 1;
-    curve[i] = Math.tanh(amount * (x + asymmetry * x * x)) / norm;
-  }
-  return curve;
+  for (const data of channels) for (let i = 0; i < length; i++) peak = Math.max(peak, Math.abs(data[i]));
+  let onset = 0;
+  while (onset < length && !channels.some((data) => Math.abs(data[onset]) >= ONSET_THRESHOLD * peak)) onset++;
+  const end = Math.min(length, onset + Math.floor(LEVEL_WINDOW * sampleRate));
+  let sum = 0;
+  for (const data of channels) for (let i = onset; i < end; i++) sum += data[i] * data[i];
+  const rms = Math.sqrt(sum / Math.max(1, (end - onset) * channels.length));
+  return {
+    offset: Math.max(0, onset / sampleRate - PRE_ROLL),
+    gain: rms > 0 ? Math.min(TARGET_RMS / rms, MAX_PEAK / peak) : 0,
+    rate: 2 ** (-cents / 1200),
+  };
 }
 
 /** Stereo reverb impulse: decaying noise that gets darker as it fades. */

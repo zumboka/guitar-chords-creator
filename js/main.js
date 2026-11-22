@@ -6,6 +6,8 @@ import { diagramSVG } from './diagram.js';
 import { decodeState, encodeState } from './share.js';
 import { keyLabel, pretty } from './theory.js';
 import { Player } from './audio.js';
+import { SOUNDS } from './sounds.js';
+import { notesOf, prefetch } from './samples.js';
 
 const $ = (id) => document.getElementById(id);
 const player = new Player();
@@ -55,6 +57,8 @@ function render() {
   $('tempo').value = state.bpm;
   $('tempo-value').textContent = state.bpm;
   updateLink();
+  // Download the notes now, so pressing play doesn't have to wait for them.
+  prefetch(SOUNDS[state.genre].instrument, notesOf(progression.chords.map((c) => c.frets)));
 }
 
 function updateLink() {
@@ -72,11 +76,13 @@ function newProgression(genre = state.genre) {
   render();
 }
 
-function setPlaying(mode) {
+function setPlaying(mode, loading = false) {
   state.playing = mode;
   for (const id of ['play-strum', 'play-arpeggio']) {
     const button = $(id);
-    button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
+    const active = button.dataset.mode === mode;
+    button.setAttribute('aria-pressed', String(active));
+    button.setAttribute('aria-busy', String(active && loading));
   }
   $('stop').disabled = !mode;
 }
@@ -93,14 +99,20 @@ function play(mode) {
     return;
   }
   try {
-    player.play(state.progression, {
-      mode,
-      bpm: state.bpm,
-      loop: $('loop').checked,
-      onChord: highlight,
-      onEnd: () => setPlaying(null),
-    });
-    setPlaying(mode);
+    player
+      .play(state.progression, {
+        mode,
+        bpm: state.bpm,
+        loop: $('loop').checked,
+        onStart: () => setPlaying(mode),
+        onChord: highlight,
+        onEnd: () => setPlaying(null),
+      })
+      .catch((error) => {
+        console.error(error);
+        toast('The guitar sounds could not be loaded');
+      });
+    setPlaying(mode, true);
   } catch (error) {
     console.error(error);
     setPlaying(null);
@@ -115,7 +127,10 @@ function stop() {
 function previewChord(index) {
   stop();
   try {
-    player.preview(state.progression, index, state.bpm);
+    player.preview(state.progression, index, state.bpm).catch((error) => {
+      console.error(error);
+      toast('The guitar sounds could not be loaded');
+    });
   } catch (error) {
     console.error(error);
   }

@@ -11,7 +11,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Topic | Decision |
 |---|---|
 | Metalcore tuning | Standard tuning, like every other genre |
-| Sound | Synthesised in the browser, no samples; a distinct tone per genre |
+| Sound | Recorded electric guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
 | Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
 | Stack | Plain HTML/CSS/JavaScript (ES modules), no framework, no build step, no dependencies |
@@ -42,6 +42,6 @@ A website that generates guitar chord progressions of four different chords for 
 
 ## Verification
 
-- Unit tests (`node --test`): every diagram spells its chord name (bass note, defining tones, no foreign notes) and is playable (stretch ≤ 4 frets, ≤ 4 fingers); every progression has four different chords and follows its genre's rules over 1,500 random generations per genre; playback only plays the diagram's notes inside the chord's bar; the synthesised strings are in tune; share links round-trip.
+- Unit tests (`node --test`): every diagram spells its chord name (bass note, defining tones, no foreign notes) and is playable (stretch ≤ 4 frets, ≤ 4 fingers); every progression has four different chords and follows its genre's rules over 1,500 random generations per genre; playback only plays the diagram's notes inside the chord's bar; every reachable note has a recording and a tuning correction; share links round-trip.
 - Browser check: every genre and both playback modes, diagrams against the reference, no console errors, phone width, output levels evened out across genres.
 - Not verifiable by the builder: how the sound pleases the ear.

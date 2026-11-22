@@ -16,7 +16,8 @@ The Godot asset-generation rules in the parent `C:\Users\malte\CLAUDE.md` don't 
 - Genre rules live in `tests/generator.test.js` (`RULES`); keep them in step with `js/genres.js`.
 - Standard tuning everywhere (user's decision, 2026-11-22).
 - Diagrams follow the user's reference chord boxes: name on top, `o` / `x` above a thick nut, dots, a barre bar, a `5fr` label higher up the neck.
-- Loudness per genre is set by `level` in `js/sounds.js`, calibrated to about -18 dBFS RMS with `renderOffline` from `js/audio.js`; recalibrate after changing a tone.
+- Sound comes from recordings in `audio/<instrument>/<midi>.mp3` (MIDI 40 to 78), not synthesis (the synthesised first version sounded poor to the user). `js/tuning.js` holds each recording's measured tuning; re-measure it when a recording is added or replaced. Keep the CC BY-SA attribution in `audio/README.md` and the page footer.
+- Loudness per genre is set by `level` in `js/sounds.js`, calibrated to about -19.5 dBFS RMS with `renderOffline` from `js/audio.js`; recalibrate after changing a genre's instrument or effects.
 - `docs/spec.md` is the agreed plan; update it when a decision changes.
 
 ## Git
