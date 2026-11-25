@@ -56,6 +56,65 @@ export function impulseResponse({ sampleRate, seconds, decay = 2.5, rng = Math.r
   });
 }
 
+/**
+ * Soft-clipping curve (tanh) for a WaveShaper, covering inputs of +-range. A bias moves the
+ * operating point and so adds even harmonics, like a tube stage. Silence stays silence.
+ */
+export function clipCurve({ range, bias = 0, points = 4097 }) {
+  const centre = (points - 1) / 2;
+  return Float32Array.from({ length: points }, (_, i) => Math.tanh(((i - centre) / centre) * range + bias) - Math.tanh(bias));
+}
+
+/** Level in dB at a frequency, from [Hz, dB] points joined by straight lines over log frequency. */
+function levelAt(points, frequency) {
+  if (frequency <= points[0][0]) return points[0][1];
+  for (let i = 1; i < points.length; i++) {
+    const [f1, db1] = points[i];
+    if (frequency > f1) continue;
+    const [f0, db0] = points[i - 1];
+    return db0 + ((db1 - db0) * Math.log(frequency / f0)) / Math.log(f1 / f0);
+  }
+  return points[points.length - 1][1];
+}
+
+/**
+ * Impulse response of a speaker cabinet: the minimum-phase filter with the given magnitude
+ * ([Hz, dB] points). `ripple` adds random bumps of up to that many dB, a third of an octave wide.
+ */
+export function cabinetImpulse({ sampleRate, points, ripple = 0, rng = Math.random, length = 1024 }) {
+  const bins = 2048;
+  const bumps = Float64Array.from({ length: 40 }, () => (rng() * 2 - 1) * ripple);
+  const bumpAt = (frequency) => {
+    const p = Math.min(38.999, Math.max(0, 3 * Math.log2(Math.max(1, frequency) / 20)));
+    const i = Math.floor(p);
+    const t = 0.5 - 0.5 * Math.cos(Math.PI * (p - i));
+    return bumps[i] * (1 - t) + bumps[i + 1] * t;
+  };
+  const logs = Float64Array.from({ length: bins + 1 }, (_, k) => {
+    const frequency = (k / bins) * (sampleRate / 2);
+    return ((levelAt(points, frequency) + bumpAt(frequency)) * Math.LN10) / 20;
+  });
+  // Cepstrum of the magnitude, then the causal impulse it stands for.
+  const period = 2 * bins;
+  const cos = Float64Array.from({ length: period }, (_, i) => Math.cos((2 * Math.PI * i) / period));
+  const cepstrum = new Float64Array(length);
+  for (let n = 0; n < length; n++) {
+    let sum = logs[0] + (n % 2 ? -1 : 1) * logs[bins];
+    for (let k = 1; k < bins; k++) sum += 2 * logs[k] * cos[(n * k) % period];
+    cepstrum[n] = sum / period;
+  }
+  const impulse = new Float64Array(length);
+  impulse[0] = Math.exp(cepstrum[0]);
+  for (let n = 1; n < length; n++) {
+    let sum = 0;
+    for (let k = 1; k <= n; k++) sum += 2 * k * cepstrum[k] * impulse[n - k];
+    impulse[n] = sum / n;
+  }
+  const fade = length / 4;
+  for (let n = length - fade; n < length; n++) impulse[n] *= 0.5 - 0.5 * Math.cos((Math.PI * (length - n)) / fade);
+  return Float32Array.from(impulse);
+}
+
 /** A loop of record surface noise: faint hiss with scattered crackles. */
 export function vinylNoise({ sampleRate, seconds, rng = Math.random }) {
   const length = Math.ceil(seconds * sampleRate);

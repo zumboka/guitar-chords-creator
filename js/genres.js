@@ -3,11 +3,24 @@
 // Progressions are Roman numerals relative to the tonic ("bVI" = the chord on the lowered sixth
 // degree), each with a chord quality from theory.js. Lowercase numerals are minor chords.
 // Rhythms are in beats of a 4/4 bar; one chord lasts one bar. A strum hits every string of the
-// shape, an upstroke the top four, and `strings: 'low'` the two lowest. `tuning` names an entry
-// of TUNINGS in theory.js.
+// shape, an upstroke the top four. A `fill` replaces the pattern in the last bar. Arpeggios are
+// written for six voices (0 = lowest); those listed in `mutes` are palm-muted. `tuning` names an
+// entry of TUNINGS in theory.js.
 
 const eighths = (vel = 1, off = 0.8) =>
   [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((at) => ({ at, dir: 'down', len: 0.46, vel: at % 1 ? off : vel }));
+
+/**
+ * A bar of sixteenths: X = the whole chord, m = palm-muted chug, - = keep ringing. Every stroke
+ * rings until the next one, so there are no gaps.
+ */
+const riff = (steps) =>
+  [...steps].flatMap((step, i) => {
+    if (step === '-') return [];
+    const next = [...steps].findIndex((s, k) => k > i && s !== '-');
+    const len = ((next < 0 ? steps.length : next) - i) / 4;
+    return [{ at: i / 4, dir: 'down', len, vel: step === 'X' ? 1 : 0.9, mute: step === 'm' }];
+  });
 
 export const GENRES = {
   'neo-soul': {
@@ -165,7 +178,7 @@ export const GENRES = {
 
   metalcore: {
     name: 'Metalcore',
-    blurb: 'Drop D power chords, Phrygian half-steps and palm-muted chugs on the open low string.',
+    blurb: 'Two high-gain guitars in Drop D: power chords, Phrygian half-steps and tight palm-muted chugs.',
     tempo: 140,
     swing: 0,
     // The low string tuned down to D: one-finger power chords and an open D to chug on.
@@ -183,22 +196,9 @@ export const GENRES = {
       { id: 'minor-loop', mode: 'minor', chords: ['i:5', 'bIII:5', 'bVII:5', 'iv:5'] },
     ],
     voicing: { center: 2, centerWeight: 0.2, open: -0.3, move: 0.3, maxBassString: 1, bassString: 0, bassPenalty: 0.9 },
-    // Full power chords on the accents; palm-muted chugs in between on the two lowest strings.
-    strum: {
-      spread: 0.004,
-      pattern: [
-        { at: 0, dir: 'down', len: 0.75, vel: 1 },
-        { at: 0.75, dir: 'down', len: 0.2, vel: 0.8, mute: true, strings: 'low' },
-        { at: 1, dir: 'down', len: 0.2, vel: 0.85, mute: true, strings: 'low' },
-        { at: 1.5, dir: 'down', len: 0.2, vel: 0.85, mute: true, strings: 'low' },
-        { at: 1.75, dir: 'down', len: 0.2, vel: 0.8, mute: true, strings: 'low' },
-        { at: 2, dir: 'down', len: 1, vel: 1 },
-        { at: 3, dir: 'down', len: 0.2, vel: 0.85, mute: true, strings: 'low' },
-        { at: 3.25, dir: 'down', len: 0.2, vel: 0.8, mute: true, strings: 'low' },
-        { at: 3.5, dir: 'down', len: 0.5, vel: 0.95 },
-      ],
-    },
-    arpeggio: { step: 0.25, sequence: [0, 2, 5, 2, 0, 2, 5, 2, 0, 2, 5, 2, 0, 5, 2, 5], ring: 0.5, vel: 0.85 },
+    // Ringing accents every six sixteenths, against the 4/4 beat, with chugs in between.
+    strum: { spread: 0, pattern: riff('X--mmmX--mmmX-mm'), fill: riff('X--mmmX--mmmX---') },
+    arpeggio: { step: 0.25, sequence: [0, 2, 5, 0, 2, 5, 0, 2, 5, 0, 2, 5, 0, 2, 5, 2], ring: 0.25, vel: 0.9, mutes: [0] },
   },
 };
 

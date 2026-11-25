@@ -15,15 +15,12 @@ function stringsOf(frets, tuning) {
   return strings;
 }
 
-/** The strings a strum hits: all, the top four on an upstroke, or the two lowest for a chug. */
-function strummed(strings, ev) {
-  if (ev.strings === 'low') return strings.slice(0, 2);
-  return ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings;
-}
+/** The strings a strum hits: all, or the top four on an upstroke. */
+const strummed = (strings, ev) => (ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings);
 
 /**
- * @returns {{ notes: {time, duration, midi, string, velocity, muted, chord}[], bar: number, duration: number }}
- *   times in seconds from the start of the progression.
+ * @returns {{ notes: {time, duration, midi, string, velocity, muted, chord, stroke}[], bar: number, duration: number }}
+ *   times in seconds from the start of the progression; notes hit together share a stroke number.
  */
 export function buildPerformance(progression, { mode, bpm }) {
   const genre = GENRES[progression.genre];
@@ -32,30 +29,35 @@ export function buildPerformance(progression, { mode, bpm }) {
   // Swing delays the off-beat eighth notes.
   const swing = (at) => (at % 1 === 0.5 ? at + genre.swing : at);
   const notes = [];
+  let stroke = 0;
 
   progression.chords.forEach((chord, index) => {
     const start = index * bar;
     const strings = stringsOf(chord.frets, genre.tuning);
     if (mode === 'strum') {
-      for (const ev of genre.strum.pattern) {
+      const { spread, pattern, fill } = genre.strum;
+      const last = index === progression.chords.length - 1;
+      for (const ev of last && fill ? fill : pattern) {
         const hits = strummed(strings, ev);
         const at = swing(ev.at);
         hits.forEach((n, k) => {
           notes.push({
-            time: start + at * beat + k * genre.strum.spread,
+            time: start + at * beat + k * spread,
             duration: Math.max(MIN_DURATION, Math.min(ev.len, 4 - at) * beat),
             midi: n.midi,
             string: n.string,
             velocity: ev.vel * (1 - k * 0.03),
             muted: !!ev.mute,
             chord: index,
+            stroke,
           });
         });
+        stroke++;
       }
     } else {
       // The pattern is written for six voices (0 = lowest); fewer voices follow its contour.
       const voices = strings.slice().sort((a, b) => a.midi - b.midi);
-      const { step, sequence, ring, vel } = genre.arpeggio;
+      const { step, sequence, ring, vel, mutes = [] } = genre.arpeggio;
       const top = Math.max(1, ...sequence);
       sequence.forEach((idx, k) => {
         const beatPos = k * step;
@@ -68,8 +70,9 @@ export function buildPerformance(progression, { mode, bpm }) {
           midi: n.midi,
           string: n.string,
           velocity: vel * (beatPos % 1 === 0 ? 1 : 0.82),
-          muted: false,
+          muted: mutes.includes(idx),
           chord: index,
+          stroke: stroke++,
         });
       });
     }
@@ -98,5 +101,20 @@ export function previewNotes(frets, genreId) {
     velocity: 0.9 - k * 0.03,
     muted: false,
     chord: 0,
+    stroke: 0,
   }));
+}
+
+/**
+ * The notes as pick strokes: those of a strum together, picked notes one by one.
+ * @returns {{time, duration, midis: number[], velocity, muted, chord}[]} midis lowest first
+ */
+export function strokesOf(notes) {
+  const strokes = new Map();
+  for (const { stroke, time, duration, midi, velocity, muted, chord } of notes) {
+    if (!strokes.has(stroke)) strokes.set(stroke, { time, duration, midis: [], velocity, muted, chord });
+    strokes.get(stroke).midis.push(midi);
+  }
+  for (const stroke of strokes.values()) stroke.midis.sort((a, b) => a - b);
+  return [...strokes.values()];
 }

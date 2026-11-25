@@ -245,6 +245,12 @@ body {
   font-weight: 700;
 }
 
+@media (prefers-color-scheme: dark) {
+  .tuning {
+    color: color-mix(in srgb, var(--accent) 50%, #ffffff);
+  }
+}
+
 .hint {
   margin: 14px 4px 0;
   color: var(--muted);

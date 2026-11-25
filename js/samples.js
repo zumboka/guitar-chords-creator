@@ -1,11 +1,11 @@
-// Recorded guitar notes (see audio/README.md): downloaded once, decoded per audio context,
-// then trimmed to the attack, evened out in level and tuned (sampleSettings in dsp.js).
+// Guitar recordings (see audio/README.md): downloaded once, decoded per audio context, then
+// trimmed to the attack, evened out in level and tuned (sampleSettings in dsp.js).
 
 import { sampleSettings } from './dsp.js';
 import { TUNINGS } from './theory.js';
-import { CENTS_SHARP, SAMPLE_RANGE } from './recordings.js';
+import { RECORDINGS, centsOf } from './recordings.js';
 
-export const sampleUrl = (instrument, midi) => `audio/${instrument}/${midi}.mp3`;
+export const sampleUrl = (instrument, midi) => `audio/${instrument}/${midi}.${RECORDINGS[instrument].type}`;
 
 /** The MIDI notes a set of diagrams can sound, lowest first. */
 export function notesOf(fretsList, tuning = 'standard') {
@@ -55,8 +55,7 @@ export class SampleBank {
             .then((data) => this.ctx.decodeAudioData(data.slice(0)))
             .then((buffer) => {
               const channels = Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c));
-              const cents = CENTS_SHARP[instrument][midi - SAMPLE_RANGE.low];
-              this.ready.set(key, { buffer, ...sampleSettings(channels, buffer.sampleRate, cents) });
+              this.ready.set(key, { buffer, ...sampleSettings(channels, buffer.sampleRate, centsOf(instrument, midi)) });
             });
           note.catch(() => this.loading.delete(key));
           this.loading.set(key, note);

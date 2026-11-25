@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { impulseResponse, sampleSettings, seededRandom, vinylNoise } from '../js/dsp.js';
+import { cabinetImpulse, clipCurve, impulseResponse, sampleSettings, seededRandom, vinylNoise } from '../js/dsp.js';
+import { SOUNDS } from '../js/sounds.js';
 
 const SR = 44100;
 
@@ -35,6 +36,54 @@ test('tuning correction: a sharp recording plays slower', () => {
   assert.equal(sampleSettings([recording(0, 0.1)], SR, 0).rate, 1);
   assert.ok(Math.abs(sampleSettings([recording(0, 0.1)], SR, 18).rate - 2 ** (-18 / 1200)) < 1e-12);
   assert.ok(sampleSettings([recording(0, 0.1)], SR, -9).rate > 1);
+});
+
+/** Level in dB of an impulse response at a frequency. */
+function magnitude(impulse, frequency, sampleRate) {
+  let re = 0;
+  let im = 0;
+  impulse.forEach((v, n) => {
+    const phase = (2 * Math.PI * frequency * n) / sampleRate;
+    re += v * Math.cos(phase);
+    im -= v * Math.sin(phase);
+  });
+  return 20 * Math.log10(Math.hypot(re, im));
+}
+
+test('clipping curves keep silence silent, rise steadily and level off', () => {
+  for (const bias of [0, 0.25]) {
+    const curve = clipCurve({ range: 5, bias });
+    assert.equal(curve.length % 2, 1, 'has a middle point');
+    assert.equal(curve[(curve.length - 1) / 2], 0);
+    for (let i = 1; i < curve.length; i++) assert.ok(curve[i] >= curve[i - 1]);
+    assert.ok(Math.abs(curve[0] + 1 + Math.tanh(bias)) < 1e-3 && Math.abs(curve.at(-1) - 1 + Math.tanh(bias)) < 1e-3);
+  }
+  const even = clipCurve({ range: 5, bias: 0 });
+  assert.ok(Math.abs(even[100] + even.at(-101)) < 1e-6, 'symmetric without a bias');
+});
+
+test('a cabinet has the frequency response it is given, at any sample rate', () => {
+  const { cabinet } = SOUNDS.metalcore.amp;
+  for (const sampleRate of [44100, 48000, 96000]) {
+    const impulse = cabinetImpulse({ sampleRate, points: cabinet });
+    assert.ok(impulse.every(Number.isFinite));
+    for (const [frequency, level] of cabinet) {
+      if (frequency < 200 || frequency > 9000) continue;
+      const got = magnitude(impulse, frequency, sampleRate);
+      assert.ok(Math.abs(got - level) < 1.5, `${frequency} Hz at ${sampleRate}: ${got.toFixed(1)} instead of ${level} dB`);
+    }
+    // Minimum phase: the energy comes first, so the speaker adds no delay.
+    const energy = impulse.reduce((sum, v) => sum + v * v, 0);
+    const first = impulse.subarray(0, Math.round(0.005 * sampleRate)).reduce((sum, v) => sum + v * v, 0);
+    assert.ok(first / energy > 0.8);
+  }
+});
+
+test('two cabinets with different seeds differ, the same seed gives the same one', () => {
+  const build = (seed) => cabinetImpulse({ sampleRate: SR, points: [[20, 0], [20000, 0]], ripple: 1.5, rng: seededRandom(seed) });
+  assert.deepEqual(build(1), build(1));
+  assert.notDeepEqual(build(1), build(2));
+  for (const f of [100, 500, 2000, 6000]) assert.ok(Math.abs(magnitude(build(1), f, SR)) < 2, 'ripple stays small');
 });
 
 test('reverb tails and vinyl noise are finite and fade or stay quiet', () => {

@@ -11,7 +11,8 @@ A website that generates guitar chord progressions of four different chords for 
 | Topic | Decision |
 |---|---|
 | Metalcore tuning | Drop D (D A D G B E). Changed on 2026-11-22 with the user's OK while improving the Metalcore sound; every other genre uses standard tuning |
-| Sound | Recorded electric guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
+| Sound | Recorded guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
+| Metalcore sound | Changed on 2026-11-25: the user wanted more of a rhythm guitar, with seamless transitions from chord to chord; it sounded like rock. Now two guitars recorded without an amp (CC0: power chords, palm mutes and single notes by Carbonthief), each through a simulated high-gain amp, playing without gaps |
 | Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
 | Stack | Plain HTML/CSS/JavaScript (ES modules), no framework, no build step, no dependencies |
@@ -38,7 +39,16 @@ A website that generates guitar chord progressions of four different chords for 
 | Punk | power chords, I–V–vi–IV family, eighth-note downstrokes | E5 – B5 – C♯5 – A5 |
 | Post Rock | add9, sus, maj7 with ringing open strings, picked patterns, delay and reverb | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords over droning open top strings, fuzz, chorus, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
-| Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, palm-muted chugs | D5 – B♭5 – F5 – C5 |
+| Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
+
+## Metalcore tone
+
+Measured on real metal rhythm guitars (Freesound previews, used for analysis only) and matched on renders of the page:
+
+- The level never drops: chugs are at least as loud as ringing chords, and a chord change dips by a few dB for some milliseconds at most.
+- Scooped, not mid-heavy: in the median 60 ms frame, 500 to 1500 Hz lies about 6 dB below 80 to 320 Hz (the first Drop D version had it 5 dB above, like rock), and so does 2 to 4 kHz.
+- Steep roll-off above 4.5 kHz, from the `cabinet` curve in `js/sounds.js`, which was fitted to that target.
+- The two sides are separate performances (correlation near 0 when strumming).
 
 ## Verification
 
