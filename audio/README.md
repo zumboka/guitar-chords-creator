@@ -2,13 +2,13 @@
 
 Files are named by MIDI note number (38 = low D in Drop D, 40 = low E, 78 = F♯5, fret 14 on the high E string). [`js/recordings.js`](../js/recordings.js) lists every folder with its range and how far each recording is out of tune; playback corrects that.
 
-## Stratocaster, for Neo Soul and Post Rock (CC BY 4.0)
+## Stratocaster, for Neo Soul, Post Rock and Shoegaze (CC BY 4.0)
 
 | Folder | Content | Used by |
 |---|---|---|
-| `strat_neck` | neck pickup, notes 40 to 78 played around the fifth to ninth fret where possible | Neo Soul |
-| `strat_bridge` | bridge pickup, notes 40 to 78 played on open strings and low frets where possible | Post Rock |
-| `strat_bridge_up` | a second performance of the same notes, further up the neck (notes 40 to 44, which exist only once, with the bridge and middle pickups) | Post Rock (second guitar when strumming) |
+| `strat_neck` | neck pickup, notes 40 to 78 played around the fifth to ninth fret where possible | Neo Soul, Shoegaze (clean guitar) |
+| `strat_bridge` | bridge pickup, notes 40 to 78 played on open strings and low frets where possible | Post Rock, Shoegaze (left fuzz guitar) |
+| `strat_bridge_up` | a second performance of the same notes, further up the neck (notes 40 to 44, which exist only once, with the bridge and middle pickups) | Post Rock (second guitar when strumming), Shoegaze (right fuzz guitar) |
 
 **Source:** [EGFxSet](https://zenodo.org/records/7044411) (the clean recordings) by Hegel Pedroza, Gerardo Meza and Iran R. Roman, described in "EGFxSet: Electric guitar tones processed through real effects of distortion, modulation, delay and reverb", ISMIR Late Breaking Demo, 2022. Project page: [egfxset.github.io](https://egfxset.github.io).
 
@@ -21,7 +21,7 @@ Files are named by MIDI note number (38 = low D in Drop D, 40 = low E, 78 = F♯
 | Folder | Notes | Used by |
 |---|---|---|
 | `electric_guitar_jazz` | 38 to 78 | LoFi |
-| `overdriven_guitar` | 38 to 78 | Punk, Shoegaze |
+| `overdriven_guitar` | 38 to 78 | Punk |
 
 **Source:** the Musyng Kite soundfont, as pre-rendered per note by the [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts) project (`https://gleitz.github.io/midi-js-soundfonts/MusyngKite/<instrument>-mp3/<note>.mp3`).
 

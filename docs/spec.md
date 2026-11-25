@@ -14,6 +14,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Sound | Recorded guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
 | Metalcore sound | Changed on 2026-11-25: the user wanted more of a rhythm guitar, with seamless transitions from chord to chord; it sounded like rock. Now two guitars recorded without an amp (CC0: power chords, palm mutes and single notes by Carbonthief), each through a simulated high-gain amp, playing without gaps |
 | Neo Soul and Post Rock sound | Changed on 2026-11-25: the user found the two too similar (they shared the instrument and nearly all effects). Now a Stratocaster recorded clean (EGFxSet, CC BY 4.0) with its neck pickup for Neo Soul and its bridge pickup for Post Rock, and an amp, rhythm and space of their own |
+| Shoegaze sound | Changed on 2026-11-25: the user found the guitar a bit plain and not as crisp as the other genres (a soundfont's overdriven guitar, doubled: nearly everything below 500 Hz and no pick attack). Now the Stratocaster recordings as two fuzz guitars and a bright clean one |
 | Strumming | Decided by the user on 2026-11-25: chords are played normally and typical of the genre, with the genre's typical sound; no extra effects (such as the ringing of a second, tremolo-picked guitar) and no extra notes (bass notes, stabs, slides). And on 2026-11-25: every genre needs its typical character when strummed; the bare strums of Neo Soul and Post Rock had none. So whole chords only (a test enforces it for every genre), in the sound world the user likes in the arpeggios |
 | Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
@@ -40,7 +41,7 @@ A website that generates guitar chord progressions of four different chords for 
 | LoFi | maj7, m7, 9ths, stepwise descents, borrowed iv | Fmaj7 – Em7 – Dm7 – Cmaj7 |
 | Punk | power chords, I–V–vi–IV family, eighth-note downstrokes | E5 – B5 – C♯5 – A5 |
 | Post Rock | add9, sus, maj7 over open strings; slow, echoing strums that build up, a ringing arpeggio | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
-| Shoegaze | borrowed chords over droning open top strings, fuzz, chorus, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
+| Shoegaze | borrowed chords over droning open top strings, a swaying wall of fuzz under a crisp clean guitar, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
 | Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
 
 ## Neo Soul and Post Rock tone
@@ -57,6 +58,19 @@ From tone guides (guitarchalk, Seymour Duncan, Fender Play, Pickup Music, Guitar
 | Brightness | warm: spectral centre near 500 to 600 Hz | crisp: near 750 to 850 Hz |
 
 The arpeggios, which the user is happy with, go further: Post Rock rings into chords faded in by the second guitar, with more echo and a bigger hall.
+
+## Shoegaze tone
+
+From tone guides (Sweetwater, Riffhard, Guitar World, Perfect Circuit, guitarguitar: crisp, clean sounds layered over murky, modulated ones; fuzz with scooped mids; the tremolo arm; big reverb) and measurements of shoegaze and dream pop guitars (Freesound previews, used for analysis only). When strumming:
+
+- Layers: two fuzz guitars far apart, two performances of the same chords, and a bright clean one in the middle.
+- Crisp: every strum rises about 8 dB out of the wall at 2 to 8 kHz (Post Rock 5, the soundfont version 2), and the spectral centre lies near 700 to 900 Hz (it was 320).
+- Scooped: dense from 160 to 400 Hz, a dip around 1 kHz, presence from 1.6 to 4 kHz, a steep roll-off above 4.5 kHz.
+- Fuzz with clear chords: from 250 to 600 Hz the chord's partials carry at least 8 dB more than everything between them.
+- Movement: partials sway by about 26 cents (16 to 46 in the references). Only the fuzz guitars have vibrato; the clean one holds the chord in tune. More chorus than now blurs the attack.
+- A wall: the level varies by about 4 dB, every string drones until it is hit again, and the hall is 11 to 13 dB down 0.4 s after the last chord, 13 to 16 dB after 1 s.
+
+The arpeggio is the same three guitars with less fuzz, so its overlapping notes stay apart.
 
 ## Metalcore tone
 

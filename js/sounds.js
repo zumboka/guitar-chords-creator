@@ -1,20 +1,30 @@
 // The guitar of each genre: recorded instruments (see audio/README.md) and their effects.
 //
 // instrument: folder in audio/. chords: recordings of whole power chords, for strums. takes: the
-// guitars, each { pan, offset (s), detune (playback rate), instrument, cabinet, level }; one centred
-// take unless listed. All of them play every note, except notes with a `part` (performance.js). amp: an
-// amp per take (amp.js). tight: strings stop dead before the next stroke. release: how slowly they
-// stop otherwise (s). compress: evens out loud and soft. tone: EQ in Hz and dB, peaks as { freq,
-// gain, q }. chorus / wobble: modulated delays (wobble is LoFi tape wow). delay: a ping-pong echo;
-// its beats follow the tempo. crackle: level of vinyl noise. level: output gain, calibrated so every
-// genre plays at about -19.5 dBFS RMS (measured with renderOffline in audio.js). strum: what is
-// different when the chords are strummed.
+// guitars, each { pan, offset (s), detune (playback rate), instrument, cabinet, level, amp, sway }; one
+// centred take unless listed. All of them play every note, except notes with a `part` (performance.js).
+// amp: an amp per take (amp.js), unless the take has its own. sway: vibrato, { rate (Hz), cents }.
+// tight: strings stop dead before the next stroke. release: how slowly they stop otherwise (s).
+// compress: evens out loud and soft. tone: EQ in Hz and dB, peaks as { freq, gain, q }. chorus: copies
+// of the sound with a drifting delay; wobble: the sound itself delayed like that (LoFi tape wow).
+// delay: a ping-pong echo; its beats follow the tempo. crackle: level of vinyl noise. level: output
+// gain, calibrated so every genre plays at about -19.5 dBFS RMS (measured with renderOffline in
+// audio.js). strum: what is different when the chords are strummed.
 
 import { highest, nearest } from './recordings.js';
 import { notesOf } from './samples.js';
 
-// The same recording again, a little late and detuned on the other side.
-const DOUBLED = [{ pan: -0.6 }, { pan: 0.6, offset: 0.016, detune: 1.0025 }];
+// Fuzz with scooped mids, for whole chords: little enough gain that their notes stay apart.
+const FUZZ = {
+  tighten: 120,
+  boost: { freq: 900, gain: 3, q: 0.5 },
+  between: { highpass: 110, lowpass: 5000 },
+  // prettier-ignore
+  cabinet: [
+    [60, -13], [90, -5], [120, -1.5], [180, -1], [250, -2.5], [400, -6], [630, -11], [1000, -13.5],
+    [1500, -11], [2200, -8], [3000, -6], [4000, -6], [5000, -9], [6500, -16], [8500, -26], [11000, -36],
+  ],
+};
 
 export const SOUNDS = {
   // One guitar close up: neck pickup, a warm clean amp, compression and a little plate reverb; a slow
@@ -33,12 +43,12 @@ export const SOUNDS = {
     },
     compress: { threshold: -24, ratio: 3, attack: 0.03, release: 0.18 },
     tone: { highpass: 60, lowpass: 9000 },
-    chorus: { mix: 0.12, rate: 0.5, depth: 0.0012, pan: 0 },
+    chorus: [{ mix: 0.12, rate: 0.5, depth: 0.0012, pan: 0 }],
     reverb: { mix: 0.1, seconds: 1.3, predelay: 0.012, lowpass: 5000 },
     release: 0.06,
     level: 0.52,
     strum: {
-      chorus: { mix: 0.35, rate: 0.6, depth: 0.0018, pan: 0.35 },
+      chorus: [{ mix: 0.35, rate: 0.6, depth: 0.0018, pan: 0.35 }],
       reverb: { mix: 0.18, seconds: 1.6, predelay: 0.015, lowpass: 5000 },
       release: 0.1,
       level: 0.42,
@@ -54,7 +64,8 @@ export const SOUNDS = {
   },
   punk: {
     instrument: 'overdriven_guitar',
-    takes: DOUBLED,
+    // The same recording again, a little late and detuned on the other side.
+    takes: [{ pan: -0.6 }, { pan: 0.6, offset: 0.016, detune: 1.0025 }],
     tone: { highpass: 90, lowpass: 7500 },
     reverb: { mix: 0.08, seconds: 1.2 },
     level: 0.95,
@@ -102,13 +113,42 @@ export const SOUNDS = {
       level: 0.33,
     },
   },
+  // Two fuzz guitars far apart, swaying as if on the tremolo arm, and between them a bright clean one
+  // for the pick attack that fuzz swallows; a little chorus and a big dark hall. Picked notes overlap
+  // more than strums, so they get less fuzz.
   shoegaze: {
-    instrument: 'overdriven_guitar',
-    takes: DOUBLED,
-    tone: { highpass: 110, lowpass: 5000 },
-    chorus: { mix: 0.4, rate: 0.35, depth: 0.004 },
-    reverb: { mix: 0.6, seconds: 6 },
-    level: 0.65,
+    instrument: 'strat_bridge',
+    takes: [
+      { pan: -0.8, cabinet: 6, sway: { rate: 0.9, cents: 15 } },
+      { pan: 0.7, cabinet: 7, sway: { rate: 1.15, cents: 15 }, instrument: 'strat_bridge_up', offset: 0.012 },
+      {
+        instrument: 'strat_neck',
+        cabinet: 8,
+        amp: {
+          tighten: 140,
+          drive: [1.2],
+          // prettier-ignore
+          cabinet: [
+            [60, -3.5], [120, 5.5], [200, 7.5], [350, 5.5], [630, 3.5], [1200, 5.5], [2000, 9], [3000, 12.5],
+            [4500, 15.5], [6000, 16], [8000, 12.5], [10500, 2.5],
+          ],
+        },
+      },
+    ],
+    amp: { ...FUZZ, drive: [3.5, 1.9] },
+    tone: { highpass: 80, lowpass: 10000 },
+    chorus: [
+      { mix: 0.25, rate: 0.8, depth: 0.0024, pan: -0.8 },
+      { mix: 0.25, rate: 1.1, depth: 0.0019, pan: 0.8 },
+    ],
+    reverb: { mix: 0.55, seconds: 5, predelay: 0.04, lowpass: 3500 },
+    release: 0.15,
+    level: 0.225,
+    strum: {
+      amp: { ...FUZZ, drive: [6, 2.2] },
+      release: 0.09,
+      level: 0.14,
+    },
   },
   metalcore: {
     // Straight from the guitar: whole power chords for the strums, single notes for the arpeggio.
@@ -154,6 +194,7 @@ export function takesOf(sound) {
     detune: 1,
     level: 1,
     instrument: sound.instrument,
+    amp: sound.amp,
     ...take,
   }));
 }

@@ -133,6 +133,21 @@ test('neo soul strums chords on 1 and 3, slaps the backbeat and swings upstrokes
   }
 });
 
+test('shoegaze strings drone until they are hit again', () => {
+  const p = generateProgression('shoegaze', seededRandom(30));
+  const { notes, bar } = buildPerformance(p, { mode: 'strum', bpm: 92 });
+  p.chords.forEach((chord, i) => {
+    chord.frets.forEach((fret, string) => {
+      if (fret == null) return;
+      const hits = notes.filter((n) => n.chord === i && n.string === string);
+      hits.forEach((n, k) => {
+        const until = k + 1 < hits.length ? hits[k + 1].time : (i + 1) * bar;
+        assert.ok(n.time + n.duration >= until - EPS, 'no hole in the wall');
+      });
+    });
+  });
+});
+
 test('post rock strums slowly, grows with every chord and drives on in the last bar', () => {
   const p = generateProgression('post-rock', seededRandom(29));
   const { notes } = buildPerformance(p, { mode: 'strum', bpm: 120 });

@@ -116,8 +116,7 @@ function buildChain(ctx, sound, destination) {
   const out = gain(ctx, sound.level);
   head.connect(out);
 
-  if (sound.chorus) {
-    const { mix, rate, depth, pan = 0.5 } = sound.chorus;
+  for (const { mix, rate, depth, pan } of sound.chorus || []) {
     series(head, modulatedDelay(ctx, 0.014, rate, depth, oscillators), gain(ctx, mix), panner(ctx, pan), out);
   }
 
@@ -166,26 +165,40 @@ function startNoise(ctx, level, destination) {
   return source;
 }
 
+/** Vibrato, like a hand on the tremolo arm: up to `cents` above and below the note. */
+function vibrato(ctx, { rate, cents }, oscillators) {
+  const depth = (2 ** (cents / 1200) - 1) / (2 * Math.PI * rate);
+  return modulatedDelay(ctx, 2 * depth, rate, depth, oscillators);
+}
+
 /**
  * The way into a genre's chain for one playback: an input per take, through its amp and panned,
- * mixed into `out`, which can be faded without disturbing other playbacks.
+ * mixed into `out`, which can be faded without disturbing other playbacks. `close` lets go of it
+ * after some milliseconds.
  */
 function openTakes(ctx, sound, destination) {
+  const oscillators = [];
   const out = ctx.createGain();
   out.connect(destination);
   const inputs = takesOf(sound).map((take) => {
     const input = gain(ctx, take.level);
     let head = input;
-    if (sound.amp) {
-      const amp = createAmp(ctx, sound.amp, take.cabinet);
+    if (take.amp) {
+      const amp = createAmp(ctx, take.amp, take.cabinet);
       input.connect(amp.input);
       head = amp.output;
     }
+    if (take.sway) head = series(head, vibrato(ctx, take.sway, oscillators));
     if (take.pan) head = series(head, panner(ctx, take.pan));
     head.connect(out);
     return input;
   });
-  return { inputs, out };
+  const close = (wait) =>
+    setTimeout(() => {
+      out.disconnect();
+      oscillators.splice(0).forEach((lfo) => lfo.stop());
+    }, wait);
+  return { inputs, out, close };
 }
 
 /** Palm mute: the hand on the bridge dulls the string, but the pick attack still comes through. */
@@ -208,8 +221,7 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
   for (const stroke of strokes) {
     const jitter = stray(JITTER);
     const loudness = 1 + stray(0.16);
-    // An amp levels everything out; without one, many notes at once need headroom.
-    const level = stroke.velocity * loudness * (sound.amp ? 1 : NOTE_LEVEL * (takes.length > 1 ? 0.75 : 1));
+    const level = stroke.velocity * loudness;
     const kind = `${stroke.midis.length} ${stroke.muted}`;
     const count = counts.get(kind) || 0;
     counts.set(kind, count + 1);
@@ -217,6 +229,8 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
     voicesFor(sound, stroke, count).forEach((voice, t) => {
       if (stroke.part != null && stroke.part !== t) return;
       const sample = bank.get(voice.instrument, voice.midi);
+      // An amp levels everything out; without one, many notes at once need headroom.
+      const headroom = takes[t].amp ? 1 : NOTE_LEVEL * (takes.length > 1 ? 0.75 : 1);
       // Separate performances stray separately; copies of one recording must stay together.
       const late = takes[t].offset + (sound.tight ? stray(TIGHT_JITTER) : jitter);
       const start = Math.max(ctx.currentTime, startAt + stroke.time + late);
@@ -225,7 +239,7 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
       source.buffer = sample.buffer;
       source.playbackRate.value = sample.rate * voice.rate;
       const envelope = ctx.createGain();
-      const peak = level * sample.gain;
+      const peak = level * headroom * sample.gain;
       const attack = stroke.swell || ATTACK;
       envelope.gain.setValueAtTime(0, start);
       envelope.gain.linearRampToValueAtTime(peak, start + attack);
@@ -347,7 +361,7 @@ export class Player {
     this.previewed = null;
     if (!takes) return;
     takes.out.gain.setTargetAtTime(0, this.ctx.currentTime, 0.02);
-    setTimeout(() => takes.out.disconnect(), 500);
+    takes.close(500);
   }
 
   stop() {
@@ -359,8 +373,7 @@ export class Player {
     cancelAnimationFrame(session.frame);
     if (session.takes) {
       const now = this.ctx.currentTime;
-      const { out } = session.takes;
-      out.gain.setTargetAtTime(0, now, 0.03);
+      session.takes.out.gain.setTargetAtTime(0, now, 0.03);
       for (const source of session.sources) {
         try {
           source.stop(now + 0.2);
@@ -369,7 +382,7 @@ export class Player {
         }
       }
       if (session.noise) session.noise.stop(now + 0.2);
-      setTimeout(() => out.disconnect(), 500);
+      session.takes.close(500);
     }
     if (session.onChord) session.onChord(-1);
     if (session.onEnd) session.onEnd();
@@ -401,7 +414,7 @@ export class Player {
     this.chain.setTempo(bpm);
     preview.takes = openTakes(ctx, sound, this.chain.input);
     scheduleNotes(ctx, preview.takes, previewNotes(frets, progression.genre), ctx.currentTime + 0.02, sound, this.bank);
-    setTimeout(() => preview.takes.out.disconnect(), 4000);
+    preview.takes.close(4000);
   }
 }
 

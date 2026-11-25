@@ -57,6 +57,34 @@ test('Neo Soul and Post Rock each have a world of their own, strummed or picked'
   assert.notEqual(left.instrument, right.instrument, 'two performances, not a copy');
 });
 
+test('Shoegaze is two swaying fuzz guitars with a crisp clean one between them', () => {
+  for (const mode of MODES) {
+    const sound = soundFor('shoegaze', mode);
+    const [left, right, clean, ...others] = takesOf(sound);
+    assert.equal(others.length, 0);
+    assert.ok(left.pan < 0 && right.pan > 0 && clean.pan === 0);
+    assert.equal(new Set([left, right, clean].map((t) => t.instrument)).size, 3, 'three performances');
+    for (const fuzz of [left, right]) assert.equal(fuzz.amp, sound.amp);
+    const gainOf = (amp) => amp.drive.reduce((a, b) => a * b);
+    assert.ok(gainOf(sound.amp) > 4 * gainOf(clean.amp));
+    // The chord stays in tune: one guitar holds it while the others move around it.
+    assert.ok(left.sway && right.sway && left.sway.rate !== right.sway.rate && !clean.sway);
+    assert.ok(!sound.delay, 'echoes are for Post Rock');
+  }
+  const [strummed, picked] = MODES.map((mode) => soundFor('shoegaze', mode).amp.drive[0]);
+  assert.ok(strummed > picked, 'more fuzz for strums');
+});
+
+test('a take plays through its own amp, or else the one of the sound', () => {
+  const own = { drive: [1] };
+  const shared = { drive: [2] };
+  assert.deepEqual(
+    takesOf({ instrument: 'strat_neck', amp: shared, takes: [{ amp: own }, {}] }).map((t) => t.amp),
+    [own, shared],
+  );
+  assert.equal(takesOf({ instrument: 'strat_neck' })[0].amp, undefined);
+});
+
 test('every recording in the table is there, in the format it claims, and none is left over', () => {
   for (const [instrument, { type, low }] of Object.entries(RECORDINGS)) {
     const files = new Set(readdirSync(path(`audio/${instrument}`)));

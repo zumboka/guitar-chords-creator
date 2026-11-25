@@ -189,14 +189,15 @@ export const GENRES = {
     ],
     voicing: { center: 2, centerWeight: 0.08, open: -0.5, openTop: -0.6, move: 0.08, variety: 0.4 },
     strum: {
-      spread: 0.012,
+      spread: 0.009,
+      // Every string drones until it is hit again.
       pattern: [
-        { at: 0, dir: 'down', len: 1, vel: 0.9 },
-        { at: 1, dir: 'down', len: 0.5, vel: 0.75 },
-        { at: 1.5, dir: 'up', len: 1, vel: 0.6 },
-        { at: 2.5, dir: 'up', len: 0.5, vel: 0.6 },
-        { at: 3, dir: 'down', len: 0.5, vel: 0.8 },
-        { at: 3.5, dir: 'up', len: 0.5, vel: 0.6 },
+        { at: 0, dir: 'down', len: 4, vel: 0.9 },
+        { at: 1, dir: 'down', len: 4, vel: 0.75 },
+        { at: 1.5, dir: 'up', len: 4, vel: 0.6 },
+        { at: 2.5, dir: 'up', len: 4, vel: 0.6 },
+        { at: 3, dir: 'down', len: 4, vel: 0.8 },
+        { at: 3.5, dir: 'up', len: 4, vel: 0.6 },
       ],
     },
     arpeggio: { step: 0.5, sequence: [0, 3, 5, 4, 2, 4, 5, 3], ring: 3, vel: 0.75 },
