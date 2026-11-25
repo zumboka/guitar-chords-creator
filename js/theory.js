@@ -11,7 +11,7 @@ const SCALES = {
 /** Guitar tunings, low string first: open-string MIDI notes and their names. */
 export const TUNINGS = {
   standard: { name: 'Standard', notes: [40, 45, 50, 55, 59, 64], strings: ['E', 'A', 'D', 'G', 'B', 'E'] },
-  dropD: { name: 'Drop D', notes: [38, 45, 50, 55, 59, 64], strings: ['D', 'A', 'D', 'G', 'B', 'E'] },
+  dropC: { name: 'Drop C', notes: [36, 43, 48, 53, 57, 62], strings: ['C', 'G', 'C', 'F', 'A', 'D'] },
 };
 
 export const STANDARD_TUNING = TUNINGS.standard.notes;

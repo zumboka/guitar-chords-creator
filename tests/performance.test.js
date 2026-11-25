@@ -93,7 +93,7 @@ test('the metalcore arpeggio picks single notes over a palm-muted root', () => {
   const strokes = strokesOf(buildPerformance(p, { mode: 'arpeggio', bpm: 140 }).notes);
   for (const s of strokes) {
     assert.equal(s.midis.length, 1);
-    const open = TUNINGS.dropD.notes;
+    const open = TUNINGS.dropC.notes;
     const root = Math.min(...p.chords[s.chord].frets.flatMap((f, k) => (f == null ? [] : [open[k] + f])));
     assert.equal(s.muted, s.midis[0] === root);
   }

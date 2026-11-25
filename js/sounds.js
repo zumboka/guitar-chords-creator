@@ -152,15 +152,19 @@ export const SOUNDS = {
   },
   metalcore: {
     // Straight from the guitar: whole power chords for the strums, single notes for the arpeggio.
+    // Two performances of each chord, a and b; Drop C's lowest ones from c.
     instrument: 'di_guitar',
-    chords: { ringing: ['power_chord_a', 'power_chord_b'], muted: ['palm_mute_a', 'palm_mute_b'] },
+    chords: {
+      ringing: ['power_chord_a', 'power_chord_b', 'power_chord_c'],
+      muted: ['palm_mute_a', 'palm_mute_b', 'palm_mute_c'],
+    },
     // Two rhythm guitars, hard left and right, each with its own amp and speaker.
     takes: [
       { pan: -1, cabinet: 1 },
       { pan: 1, cabinet: 2 },
     ],
     // Hz and dB; drive is the gain into each clipping stage. The cabinet is fitted to the spectrum of
-    // real metal rhythm guitars (docs/spec.md).
+    // real metal rhythm guitars in Drop C, with the bite of metalcore ones (docs/spec.md).
     amp: {
       tighten: 90,
       boost: { freq: 800, gain: 8, q: 0.5 },
@@ -168,15 +172,15 @@ export const SOUNDS = {
       between: { highpass: 110, lowpass: 7000 },
       // prettier-ignore
       cabinet: [
-        [50, -8], [70, 3.5], [90, 8], [115, 7], [140, 1.5], [180, 0], [225, -1], [280, -3],
-        [400, -3.3], [560, -5], [800, -4.8], [1100, -3.8], [1450, -3.3], [1800, -0.7], [2250, 2.6],
-        [2800, 5], [3500, 5], [4500, 1.5], [5600, -5], [7000, -13], [9000, -20], [12000, -29],
+        [50, -11.9], [70, 2.7], [90, 7.2], [115, 5], [140, 0.2], [180, -0.2], [225, -0.1], [280, -0.4],
+        [400, -0.5], [560, -2.5], [800, -2.6], [1100, -1.8], [1450, -1.3], [1800, 2.1], [2250, 6.2],
+        [2800, 8.9], [3500, 9.7], [4500, 8.1], [5600, 0.5], [7000, -9.5], [9000, -17.5], [12000, -27],
       ],
     },
     tone: { highpass: 60, lowpass: 10000 },
     tight: true,
     reverb: { mix: 0.04, seconds: 0.7 },
-    level: 0.074,
+    level: 0.062,
   },
 };
 
@@ -214,16 +218,19 @@ const shifted = (instrument, midi, recorded, muted = false) => ({
  */
 function recordingsFor(sound, { midis, muted }) {
   const [midi] = midis;
-  const neighbour = (instrument, note) => (note < highest(instrument) ? note + 1 : note - 1);
   if (midis.length === 1) {
     const { instrument } = sound;
-    return [shifted(instrument, midi, midi), shifted(instrument, midi, neighbour(instrument, midi))];
+    const neighbour = midi < highest(instrument) ? midi + 1 : midi - 1;
+    return [shifted(instrument, midi, midi), shifted(instrument, midi, neighbour)];
   }
-  const [a, b] = muted ? sound.chords.muted : sound.chords.ringing;
-  const root = nearest(a, midi);
-  if (!muted) return [shifted(a, midi, root), shifted(b, midi, root)];
-  const next = neighbour(a, root);
-  return [[a, root], [b, next], [b, root], [a, next]].map(([instrument, note]) => shifted(instrument, midi, note, true));
+  // Every recording of the chord itself, then those of the chords next to it.
+  const sets = muted ? sound.chords.muted : sound.chords.ringing;
+  const found = [0, 1, -1, 2, -2].flatMap((step) =>
+    sets.filter((set) => nearest(set, midi + step) === midi + step).map((set) => shifted(set, midi, midi + step, muted)),
+  );
+  const [first, second, third, fourth] = found;
+  // Chugs take turns, so that each guitar plays four different ones before one comes back.
+  return muted ? [first, fourth, second, third] : [first, second];
 }
 
 /**

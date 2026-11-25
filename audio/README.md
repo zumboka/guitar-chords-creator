@@ -1,6 +1,6 @@
 # Guitar recordings
 
-Files are named by MIDI note number (38 = low D in Drop D, 40 = low E, 78 = F♯5, fret 14 on the high E string). [`js/recordings.js`](../js/recordings.js) lists every folder with its range and how far each recording is out of tune; playback corrects that.
+Files are named by MIDI note number (36 = low C in Drop C, 40 = low E, 78 = F♯5, fret 14 on the high E string). [`js/recordings.js`](../js/recordings.js) lists every folder with its range and how far each recording is out of tune; playback corrects that.
 
 ## Stratocaster, for Neo Soul, Post Rock and Shoegaze (CC BY 4.0)
 
@@ -35,9 +35,10 @@ Files are named by MIDI note number (38 = low D in Drop D, 40 = low E, 78 = F♯
 |---|---|
 | `power_chord_a`, `power_chord_b` | two performances of each ringing power chord (root, fifth, octave), by root: 40 (E) to 51 (D♯) |
 | `palm_mute_a`, `palm_mute_b` | the same chords palm-muted |
-| `di_guitar` | single notes, 38 to 71 |
+| `power_chord_c`, `palm_mute_c` | the power chords below, ringing and palm-muted, played on a seven-string guitar: 35 (B) to 39 (D♯), for Drop C's low C to E♭ |
+| `di_guitar` | single notes, 36 to 63 |
 
-**Source:** recorded by Carbonthief and published in the [Renoise instrument library](https://files.renoise.com/forum/downloads/Instruments/): the chords from [Power Chords Std DI](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Power_Chords_Std_DI/), the single notes from [Seven String Guitar](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Seven_String_Guitar/).
+**Source:** recorded by Carbonthief and published in the [Renoise instrument library](https://files.renoise.com/forum/downloads/Instruments/): `power_chord_a`, `power_chord_b`, `palm_mute_a` and `palm_mute_b` from [Power Chords Std DI](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Power_Chords_Std_DI/), the rest from [Seven String Guitar](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Seven_String_Guitar/).
 
 **License:** CC0, public domain (stated on both pages and in their `LICENSE.txt`). Credit isn't required; thank you anyway.
 

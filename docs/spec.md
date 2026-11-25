@@ -10,9 +10,9 @@ A website that generates guitar chord progressions of four different chords for 
 
 | Topic | Decision |
 |---|---|
-| Metalcore tuning | Drop D (D A D G B E). Changed on 2026-11-22 with the user's OK while improving the Metalcore sound; every other genre uses standard tuning |
+| Metalcore tuning | Drop C (C G C F A D), the user's request on 2026-11-25, to make it more fitting and natural. Drop D (D A D G B E) from 2026-11-22, with the user's OK; every other genre uses standard tuning |
 | Sound | Recorded guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
-| Metalcore sound | Changed on 2026-11-25: the user wanted more of a rhythm guitar, with seamless transitions from chord to chord; it sounded like rock. Now two guitars recorded without an amp (CC0: power chords, palm mutes and single notes by Carbonthief), each through a simulated high-gain amp, playing without gaps |
+| Metalcore sound | Changed on 2026-11-25: the user wanted more of a rhythm guitar, with seamless transitions from chord to chord; it sounded like rock. Now two guitars recorded without an amp (CC0: power chords, palm mutes and single notes by Carbonthief), each through a simulated high-gain amp, playing without gaps. Later that day the user asked for chords, sound and strumming typical of the genre, the chords most importantly: now the progressions of metalcore songs in Drop C, mostly C minor; the lowest chords recorded on a seven-string guitar instead of moved down; more bite; chug groups opened by ringing accents ("Metalcore chords and rhythm") |
 | Neo Soul and Post Rock sound | Changed on 2026-11-25: the user found the two too similar (they shared the instrument and nearly all effects). Now a Stratocaster recorded clean (EGFxSet, CC BY 4.0) with its neck pickup for Neo Soul and its bridge pickup for Post Rock, and an amp, rhythm and space of their own |
 | Shoegaze sound | Changed on 2026-11-25: the user found the guitar a bit plain and not as crisp as the other genres (a soundfont's overdriven guitar, doubled: nearly everything below 500 Hz and no pick attack). Now the Stratocaster recordings as two fuzz guitars and a bright clean one |
 | Strumming | Decided by the user on 2026-11-25: chords are played normally and typical of the genre, with the genre's typical sound; no extra effects (such as the ringing of a second, tremolo-picked guitar) and no extra notes (bass notes, stabs, slides). And on 2026-11-25: every genre needs its typical character when strummed; the bare strums of Neo Soul and Post Rock had none. So whole chords only (a test enforces it for every genre), in the sound world the user likes in the arpeggios |
@@ -42,7 +42,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Punk | power chords, I–V–vi–IV family, eighth-note downstrokes | E5 – B5 – C♯5 – A5 |
 | Post Rock | add9, sus, maj7 over open strings; slow, echoing strums that build up, a ringing arpeggio | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords over droning open top strings, a swaying wall of fuzz under a crisp clean guitar, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
-| Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
+| Metalcore | Drop C, mostly C minor on the open low string; the progressions of metalcore choruses and riffs (VI–VII–i, the minor v, Phrygian half-steps) as one-finger power chords; chug groups opened by ringing accents, without a gap | A♭5 – B♭5 – C5 – E♭5 |
 
 ## Neo Soul and Post Rock tone
 
@@ -72,14 +72,29 @@ From tone guides (Sweetwater, Riffhard, Guitar World, Perfect Circuit, guitargui
 
 The arpeggio is the same three guitars with less fuzz, so its overlapping notes stay apart.
 
+## Metalcore chords and rhythm
+
+From transcriptions of metalcore songs (Hooktheory TheoryTab, user tabs on guitartabs.cc), a Drop C lesson (Guitar World) and guides (Riffhard, GuitarChalk):
+
+- Progressions, each four different chords:
+  - VI–VII–i–III: Killswitch Engage "Rose of Sharyn" (D♭–E♭–F–A♭ in F minor), Demon Hunter "My Heartstrings Come Undone", Bring Me The Horizon "Avalanche". The choruses of Killswitch Engage's "When Darkness Falls" and "In Due Time" are VI–VII–i–VII.
+  - i–v–VI–VII: Parkway Drive "Horizons".
+  - i–VI–III–v: Trivium "Like Light to the Flies".
+  - VI–iv–i–III: Motionless in White "Undead Ahead 2"; VI–iv–i in Parkway Drive "Alone" and Killswitch Engage "My Curse".
+  - i–VII–VI–V: i–VII–VI–VII in Bullet for My Valentine "Your Betrayal" and Motionless in White "Werewolf", i–VI–V in Avenged Sevenfold "Unholy Confessions".
+  - i–♭II–VII–VI, the Phrygian half-step: Demon Hunter's pre-chorus.
+- Key: C minor half the time, on the open low string (Killswitch Engage's three transcribed songs, "Your Betrayal" and "Werewolf" are in C minor), else D, F or G minor.
+- Shapes: one-finger power chords across the three lowest strings, up to fret 14, and C5 on the open strings, as in the tabs of "The End of Heartache" (8, 0, 10, 12), "My Curse" (8, 5, 0) and As I Lay Dying "Forsaken" (10, 2, 5, 7). No punk progression.
+- Rhythm: the verse riffs of "The End of Heartache" chug in groups of four, three and two sixteenths with short gaps. Here each group opens with a ringing accent and the gaps ring on, so the sound never stops: `Xmmm--Xmm--Xm-X-` (X ringing, m palm-muted, - ringing on). Choruses strum the chords open in downstrokes; the last bar does that in eighths and chugs its way back to the first: `X-X-X-X-X-X-mmmm`.
+
 ## Metalcore tone
 
 Measured on real metal rhythm guitars (Freesound previews, used for analysis only) and matched on renders of the page:
 
 - The level never drops: chugs are at least as loud as ringing chords, and a chord change dips by a few dB for some milliseconds at most.
-- Scooped, not mid-heavy: in the median 60 ms frame, 500 to 1500 Hz lies about 6 dB below 80 to 320 Hz (the first Drop D version had it 5 dB above, like rock), and so does 2 to 4 kHz.
-- Steep roll-off above 4.5 kHz, from the `cabinet` curve in `js/sounds.js`, which was fitted to that target.
-- The two sides are separate performances (correlation near 0 when strumming).
+- Scooped, not mid-heavy, with bite: in third octaves against 100 to 315 Hz, 500 Hz to 1.25 kHz lies 4.5 to 8 dB down and 2 to 3.15 kHz about 3 dB down (the first Drop D version had the mids 5 dB above, like rock). In Drop C that is 1.5 to 2.5 dB more at 2 to 5 kHz than the Drop D version had, as in metalcore recordings; the spectral centre lies at 550 to 800 Hz.
+- Steep roll-off above 4.5 kHz, from the `cabinet` curve in `js/sounds.js`, which was fitted to that target on renders of six progressions in four keys.
+- The two sides are separate performances: above 500 Hz their correlation stays near 0. Below 150 Hz the same low notes line up, as in real double tracking.
 
 ## Verification
 

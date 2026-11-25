@@ -1,6 +1,6 @@
 // Chord-box diagrams as SVG: strings left (lowest) to right, o / x above a thick nut,
 // dots on the frets, a bar for barre chords and a fret label ("5fr") higher up the neck.
-// Outside standard tuning the string names go underneath, the retuned ones highlighted.
+// Outside standard tuning the string names go underneath, the dropped one highlighted.
 
 import { TUNINGS } from './theory.js';
 import { findBarre } from './voicings.js';
@@ -68,9 +68,12 @@ export function diagramSVG(frets, label = '', tuning = 'standard') {
   let height = HEIGHT;
   if (tuning !== 'standard') {
     const y = TOP + FRETS * FRET_HEIGHT + 14;
+    // The dropped string is the one tuned apart from the others (in Drop C they all sit a tone lower).
+    const offsets = TUNINGS[tuning].notes.map((note, s) => note - TUNINGS.standard.notes[s]);
+    const shared = offsets.find((o) => offsets.filter((p) => p === o).length > offsets.length / 2) ?? 0;
     TUNINGS[tuning].strings.forEach((name, s) => {
-      const retuned = TUNINGS[tuning].notes[s] !== TUNINGS.standard.notes[s];
-      parts.push(`<text class="tuning-note${retuned ? ' retuned' : ''}" x="${sx(s)}" y="${y}">${name}</text>`);
+      const dropped = offsets[s] !== shared;
+      parts.push(`<text class="tuning-note${dropped ? ' retuned' : ''}" x="${sx(s)}" y="${y}">${name}</text>`);
     });
     height += TUNING_ROW;
   }

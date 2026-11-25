@@ -125,15 +125,13 @@ const OPEN = [
   ['sus4', 'B', [x, 2, 4, 4, 0, 0]],
 ].map(toShape);
 
-// Drop D: the low string sounds a tone lower. Shapes that leave it muted work unchanged; power
-// chords get the one-finger shape across the three lowest strings.
-const lowStringMuted = (s) => s.frets[0] == null;
-
+// Drop C, for Metalcore: every string a tone lower than in standard tuning, the low one two tones.
+// Power chords take one finger across the three lowest strings, or none for C5.
 export const SHAPES = {
   standard: { movable: MOVABLE, open: OPEN },
-  dropD: {
-    movable: [toShape(['5', 'E', [2, 2, 2, x, x, x]]), ...MOVABLE.filter(lowStringMuted)],
-    open: [toShape(['5', 'D', [0, 0, 0, x, x, x]]), ...OPEN.filter(lowStringMuted)],
+  dropC: {
+    movable: [toShape(['5', 'D', [2, 2, 2, x, x, x]])],
+    open: [toShape(['5', 'C', [0, 0, 0, x, x, x]])],
   },
 };
 

@@ -49,11 +49,12 @@ test('every quality the genres use has shapes for all twelve roots, in the tunin
   }
 });
 
-test('Drop D: the open low strings are a D5, and power chords take one finger', () => {
-  assert.ok(matchesChord([0, 0, 0, x, x, x], 2, '5', 'dropD'));
-  assert.ok(!matchesChord([0, 0, 0, x, x, x], 2, '5'), 'not in standard tuning');
-  assert.ok(voicingsFor(4, '5', 'dropD').some((f) => fretsToString(f) === '222xxx'), 'E5 with one finger');
-  assert.ok(!voicingsFor(4, '5', 'dropD').some((f) => f[0] === 0), 'no open low E in Drop D');
+test('Drop C: the open low strings are a C5, and power chords take one finger', () => {
+  assert.ok(matchesChord([0, 0, 0, x, x, x], 0, '5', 'dropC'));
+  assert.ok(!matchesChord([0, 0, 0, x, x, x], 0, '5'), 'not in standard tuning');
+  assert.deepEqual(voicingsFor(2, '5', 'dropC').map(fretsToString), ['222xxx', 'eeexxx'], 'D5 at fret 2 or 14');
+  assert.deepEqual(voicingsFor(0, '5', 'dropC').map(fretsToString), ['000xxx', 'cccxxx'], 'C5 open or at fret 12');
+  assert.deepEqual(voicingsFor(10, '5', 'dropC').map(fretsToString), ['aaaxxx'], 'Bb5 at fret 10');
 });
 
 test('the chord check rejects wrong notes, missing tones and a wrong bass', () => {

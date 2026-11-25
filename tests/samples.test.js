@@ -188,11 +188,15 @@ test('the two metalcore guitars never play the same recording, and repeated stro
   const sound = SOUNDS.metalcore;
   const key = (v) => `${v.instrument}/${v.midi}`;
   for (const stroke of [
-    { midis: [38, 45, 50], muted: true },
-    { midis: [51, 58, 63], muted: true },
+    { midis: [36, 43, 48], muted: true },
+    { midis: [36, 43, 48], muted: false },
+    { midis: [39, 46, 51], muted: true },
+    { midis: [39, 46, 51], muted: false },
+    { midis: [40, 47, 52], muted: true },
+    { midis: [50, 57, 62], muted: true },
     { midis: [45, 52, 57], muted: false },
-    { midis: [38], muted: true },
-    { midis: [70], muted: false },
+    { midis: [36], muted: true },
+    { midis: [62], muted: false },
   ]) {
     for (let k = 0; k < 8; k++) {
       const [left, right] = voicesFor(sound, stroke, k);
@@ -202,8 +206,10 @@ test('the two metalcore guitars never play the same recording, and repeated stro
       assert.notEqual(key(right), key(nextRight));
     }
   }
-  const chug = [0, 1, 2, 3].map((k) => key(voicesFor(sound, { midis: [38, 45, 50], muted: true }, k)[0]));
-  assert.equal(new Set(chug).size, 4, 'four different chugs before one comes back');
+  for (const root of [36, 38, 41]) {
+    const chug = [0, 1, 2, 3].map((k) => key(voicesFor(sound, { midis: [root, root + 7, root + 12], muted: true }, k)[0]));
+    assert.equal(new Set(chug).size, 4, 'four different chugs before one comes back');
+  }
 });
 
 test('notesOf lists each sounding note once, lowest first', () => {
@@ -214,7 +220,7 @@ test('notesOf lists each sounding note once, lowest first', () => {
     ]),
     [43, 47, 48, 50, 52, 55, 59, 60, 64, 67],
   );
-  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropD'), [38, 45, 50]);
+  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropC'), [36, 43, 48]);
 });
 
 /** An audio context that decodes anything into a short tone. */

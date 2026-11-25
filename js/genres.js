@@ -205,26 +205,30 @@ export const GENRES = {
 
   metalcore: {
     name: 'Metalcore',
-    blurb: 'Two high-gain guitars in Drop D: power chords, Phrygian half-steps and tight palm-muted chugs.',
+    blurb: 'Two high-gain guitars in Drop C: anthemic minor progressions, palm-muted chugs and ringing accents.',
     tempo: 140,
     swing: 0,
-    // The low string tuned down to D: one-finger power chords and an open D to chug on.
-    tuning: 'dropD',
+    // Every string a tone lower and the low one two: one-finger power chords and an open low C.
+    tuning: 'dropC',
     keys: {
       major: [],
-      minor: ['D', 'D', 'D', 'E', 'F', 'G'],
+      // Mostly C minor, the key of the open low string.
+      minor: ['C', 'C', 'C', 'D', 'F', 'G'],
     },
+    // As in metalcore songs (docs/spec.md): the VI-VII-i of the choruses, the minor v, Phrygian half-steps.
     templates: [
-      { id: 'aeolian-anthem', mode: 'minor', chords: ['i:5', 'bVI:5', 'bIII:5', 'bVII:5'] },
-      { id: 'andalusian', mode: 'minor', chords: ['i:5', 'bVII:5', 'bVI:5', 'V:5'] },
+      { id: 'six-seven-one-three', mode: 'minor', chords: ['bVI:5', 'bVII:5', 'i:5', 'bIII:5'] },
+      { id: 'one-five-six-seven', mode: 'minor', chords: ['i:5', 'v:5', 'bVI:5', 'bVII:5'] },
+      { id: 'one-six-three-five', mode: 'minor', chords: ['i:5', 'bVI:5', 'bIII:5', 'v:5'] },
+      { id: 'six-four-one-three', mode: 'minor', chords: ['bVI:5', 'iv:5', 'i:5', 'bIII:5'] },
+      { id: 'one-seven-six-five', mode: 'minor', chords: ['i:5', 'bVII:5', 'bVI:5', 'V:5'] },
       { id: 'phrygian', mode: 'minor', chords: ['i:5', 'bII:5', 'bVII:5', 'bVI:5'] },
-      { id: 'minor-cadence', mode: 'minor', chords: ['i:5', 'bVI:5', 'iv:5', 'v:5'] },
-      { id: 'epic-rise', mode: 'minor', chords: ['bVI:5', 'bVII:5', 'i:5', 'v:5'] },
-      { id: 'minor-loop', mode: 'minor', chords: ['i:5', 'bIII:5', 'bVII:5', 'iv:5'] },
     ],
-    voicing: { center: 2, centerWeight: 0.2, open: -0.3, move: 0.3, maxBassString: 1, bassString: 0, bassPenalty: 0.9 },
-    // Ringing accents every six sixteenths, against the 4/4 beat, with chugs in between.
-    strum: { spread: 0, pattern: riff('X--mmmX--mmmX-mm'), fill: riff('X--mmmX--mmmX---') },
+    // One-finger shapes anywhere on the neck, C5 on the open strings.
+    voicing: { center: 5, centerWeight: 0.05, open: -0.3, move: 0.05 },
+    // Chugs in groups of four, three and two, each opened by a ringing accent, as in Killswitch Engage's
+    // verse riffs; the last bar rings in eighths like a chorus and chugs its way back to the first.
+    strum: { spread: 0, pattern: riff('Xmmm--Xmm--Xm-X-'), fill: riff('X-X-X-X-X-X-mmmm') },
     arpeggio: { step: 0.25, sequence: [0, 2, 5, 0, 2, 5, 0, 2, 5, 0, 2, 5, 0, 2, 5, 2], ring: 0.25, vel: 0.9, mutes: [0] },
   },
 };

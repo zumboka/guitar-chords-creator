@@ -92,7 +92,7 @@ for (const id of GENRE_IDS) {
           assert.ok(c.frets[0] != null || c.frets[1] != null, `${c.name} power chord sits on the low strings`);
         }
         if (id === 'metalcore' && c.frets[0] != null) {
-          assert.ok(c.frets[1] === c.frets[0] && c.frets[2] === c.frets[0], `${c.name}: one-finger Drop D shape`);
+          assert.ok(c.frets[1] === c.frets[0] && c.frets[2] === c.frets[0], `${c.name}: one-finger Drop C shape`);
         }
       }
       assert.ok(RULES[id].check(p), `${id} progression ${p.chords.map((c) => c.name).join(' ')} ${RULES[id].why}`);
@@ -137,19 +137,37 @@ test('the example progressions from the plan come out as promised', () => {
   assert.deepEqual(names('punk', 'axis', 'E', 'major'), ['E5', 'B5', 'C#5', 'A5']);
   assert.deepEqual(names('post-rock', 'open-four', 'G', 'major'), ['Gmaj7', 'Em(add9)', 'Cadd9', 'Dsus4']);
   assert.deepEqual(names('shoegaze', 'drone-mixture', 'E', 'major'), ['Emaj7', 'Cmaj7', 'Aadd9', 'Am(add9)']);
-  assert.deepEqual(names('metalcore', 'aeolian-anthem', 'E', 'minor'), ['E5', 'C5', 'G5', 'D5']);
+  assert.deepEqual(names('metalcore', 'six-seven-one-three', 'C', 'minor'), ['Ab5', 'Bb5', 'C5', 'Eb5']);
 });
 
-test('metalcore in D minor chugs on the open low D', () => {
+test('metalcore is mostly in C minor, and its home chord mostly rings on the open low strings', () => {
   const rng = seededRandom(9);
-  for (let i = 0; i < 20; i++) {
-    const p = buildProgression('metalcore', 'aeolian-anthem', { tonic: 'D', mode: 'minor' }, null, rng);
-    assert.deepEqual(
-      p.chords.map((c) => c.name),
-      ['D5', 'Bb5', 'F5', 'C5'],
-    );
-    assert.deepEqual(p.chords[0].frets, [0, 0, 0, null, null, null]);
+  let inC = 0;
+  let open = 0;
+  for (let i = 0; i < 300; i++) {
+    const p = generateProgression('metalcore', rng);
+    if (p.key.tonic !== 'C') continue;
+    inC++;
+    const home = p.chords.find((c) => c.roman === 'i5');
+    if (home.frets[0] === 0) open++;
+    else assert.deepEqual(home.frets, [12, 12, 12, null, null, null], 'or an octave up');
   }
+  assert.ok(inC > 120 && inC < 180, `${inC} of 300 in C minor`);
+  assert.ok(open > 0.8 * inC, `${open} of ${inC} on the open strings`);
+});
+
+test('metalcore plays the progressions of metalcore choruses and riffs', () => {
+  const names = (template) => buildProgression('metalcore', template, { tonic: 'C', mode: 'minor' }).chords.map((c) => c.name);
+  // Killswitch Engage, Bring Me The Horizon, Demon Hunter: VI-VII-i-III.
+  assert.deepEqual(names('six-seven-one-three'), ['Ab5', 'Bb5', 'C5', 'Eb5']);
+  // Parkway Drive: i-v-VI-VII.
+  assert.deepEqual(names('one-five-six-seven'), ['C5', 'G5', 'Ab5', 'Bb5']);
+  // Phrygian: the half-step above the open string.
+  assert.deepEqual(names('phrygian'), ['C5', 'Db5', 'Bb5', 'Ab5']);
+  const shared = GENRES.metalcore.templates.filter((t) =>
+    GENRES.punk.templates.some((p) => p.chords.join() === t.chords.join()),
+  );
+  assert.deepEqual(shared, [], 'none of them is a punk progression');
 });
 
 test('shoegaze in E keeps the open top strings ringing through the drone progression', () => {
