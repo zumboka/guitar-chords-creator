@@ -2,7 +2,7 @@
 // on recorded guitar samples.
 
 import { GENRES } from './genres.js';
-import { SOUNDS, recordingsNeeded, takesOf, voicesFor } from './sounds.js';
+import { recordingsNeeded, soundFor, takesOf, voicesFor } from './sounds.js';
 import { createAmp } from './amp.js';
 import { impulseResponse, seededRandom, vinylNoise } from './dsp.js';
 import { filter, gain, series } from './nodes.js';
@@ -20,13 +20,10 @@ const TIGHT_JITTER = 0.005;
 // it: distortion would drag out a slow release into the next chord.
 const DAMP = 0.01;
 const CHOKE = 0.006;
-// A slide stays on the fret it starts from for a moment, then moves (s).
-const SLIDE_HOLD = 0.03;
-const SLIDE_TIME = 0.06;
 
 /** Loads the recordings a set of diagrams needs to be played in a genre's sound and tuning. */
 function loadNotes(bank, genreId, fretsList, mode) {
-  const needed = recordingsNeeded(SOUNDS[genreId], fretsList, GENRES[genreId].tuning, mode);
+  const needed = recordingsNeeded(genreId, mode, fretsList, GENRES[genreId].tuning);
   return Promise.all([...needed].map(([instrument, notes]) => bank.load(instrument, [...notes])));
 }
 
@@ -145,9 +142,11 @@ function buildChain(ctx, sound, destination) {
       const time = Math.min(1.9, (sound.delay.beats * 60) / bpm);
       for (const delay of echo.delays) delay.delayTime.setTargetAtTime(time, ctx.currentTime, 0.05);
     },
+    /** Fades out what still rings, then lets go of the chain. */
     dispose() {
-      oscillators.forEach((lfo) => lfo.stop());
-      out.disconnect();
+      out.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+      oscillators.forEach((lfo) => lfo.stop(ctx.currentTime + 0.3));
+      setTimeout(() => out.disconnect(), 300);
     },
   };
 }
@@ -224,15 +223,7 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
       const end = start + Math.max(0.02, stroke.duration - (sound.tight ? DAMP : 0));
       const source = ctx.createBufferSource();
       source.buffer = sample.buffer;
-      const rate = sample.rate * voice.rate;
-      if (stroke.slide) {
-        const from = rate * 2 ** (stroke.slide / 12);
-        source.playbackRate.setValueAtTime(from, start);
-        source.playbackRate.setValueAtTime(from, start + SLIDE_HOLD);
-        source.playbackRate.exponentialRampToValueAtTime(rate, start + SLIDE_HOLD + SLIDE_TIME);
-      } else {
-        source.playbackRate.value = rate;
-      }
+      source.playbackRate.value = sample.rate * voice.rate;
       const envelope = ctx.createGain();
       const peak = level * sample.gain;
       const attack = stroke.swell || ATTACK;
@@ -261,7 +252,7 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
 export class Player {
   constructor() {
     this.ctx = null;
-    this.genre = null;
+    this.sound = null;
     this.session = null;
     this.previewed = null;
   }
@@ -270,8 +261,8 @@ export class Player {
     return typeof window !== 'undefined' && !!(window.AudioContext || window.webkitAudioContext);
   }
 
-  /** Creates the audio context on first use (it must start from a click) and the genre's chain. */
-  ensure(genreId) {
+  /** Creates the audio context on first use (it must start from a click) and the chain of a genre and mode. */
+  ensure(genreId, mode) {
     if (!this.ctx) {
       const Context = window.AudioContext || window.webkitAudioContext;
       this.ctx = new Context({ latencyHint: 'interactive' });
@@ -279,10 +270,11 @@ export class Player {
       this.bank = new SampleBank(this.ctx);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
-    if (this.genre !== genreId) {
+    const sound = `${genreId} ${mode}`;
+    if (this.sound !== sound) {
       if (this.chain) this.chain.dispose();
-      this.chain = buildChain(this.ctx, SOUNDS[genreId], this.master);
-      this.genre = genreId;
+      this.chain = buildChain(this.ctx, soundFor(genreId, mode), this.master);
+      this.sound = sound;
     }
     return this.ctx;
   }
@@ -294,8 +286,8 @@ export class Player {
    */
   async play(progression, { mode, bpm, loop = false, onStart, onChord, onEnd }) {
     this.stop();
-    const ctx = this.ensure(progression.genre);
-    const sound = SOUNDS[progression.genre];
+    const ctx = this.ensure(progression.genre, mode);
+    const sound = soundFor(progression.genre, mode);
     const session = { progression, mode, bpm, loop, onChord, onEnd, sources: [], cycles: [], timers: [], chord: -1 };
     this.session = session;
     try {
@@ -321,7 +313,7 @@ export class Player {
 
   scheduleCycle(session, startAt) {
     const perf = buildPerformance(session.progression, { mode: session.mode, bpm: session.bpm });
-    const sound = SOUNDS[session.progression.genre];
+    const sound = soundFor(session.progression.genre, session.mode);
     session.sources = session.sources
       .slice(-400)
       .concat(scheduleNotes(this.ctx, session.takes, perf.notes, startAt, sound, this.bank));
@@ -399,13 +391,13 @@ export class Player {
   /** One strum of a single chord, until it has rung out, another chord is clicked or playback starts. */
   async preview(progression, index, bpm) {
     this.endPreview();
-    const ctx = this.ensure(progression.genre);
-    const sound = SOUNDS[progression.genre];
+    const ctx = this.ensure(progression.genre, 'strum');
+    const sound = soundFor(progression.genre, 'strum');
     const frets = progression.chords[index].frets;
     const preview = { takes: null };
     this.previewed = preview;
     await loadNotes(this.bank, progression.genre, [frets], 'strum');
-    if (this.previewed !== preview || this.genre !== progression.genre) return;
+    if (this.previewed !== preview) return;
     this.chain.setTempo(bpm);
     preview.takes = openTakes(ctx, sound, this.chain.input);
     scheduleNotes(ctx, preview.takes, previewNotes(frets, progression.genre), ctx.currentTime + 0.02, sound, this.bank);
@@ -417,7 +409,7 @@ export class Player {
 export async function renderOffline(progression, { mode, bpm, tail = 2, sampleRate = 44100 }) {
   const perf = buildPerformance(progression, { mode, bpm });
   const ctx = new OfflineAudioContext(2, Math.ceil((perf.duration + tail) * sampleRate), sampleRate);
-  const sound = SOUNDS[progression.genre];
+  const sound = soundFor(progression.genre, mode);
   const bank = new SampleBank(ctx);
   await loadNotes(bank, progression.genre, fretsOf(progression), mode);
   const chain = buildChain(ctx, sound, createMaster(ctx));

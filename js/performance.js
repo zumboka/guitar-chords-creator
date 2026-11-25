@@ -17,15 +17,11 @@ function stringsOf(frets, tuning) {
   return strings;
 }
 
-/** The strings a stroke hits: all, the bass, all but the bass, or the top four on an upstroke. */
-function hit(strings, ev) {
-  if (ev.strings === 'bass') return strings.slice(0, 1);
-  if (ev.strings === 'top') return strings.slice(1);
-  return ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings;
-}
+/** The strings a strum hits: all, or the top four on an upstroke. */
+const strummed = (strings, ev) => (ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings);
 
 /**
- * @returns {{ notes: {time, duration, midi, string, velocity, muted, dead, slide, swell, part, chord, stroke}[],
+ * @returns {{ notes: {time, duration, midi, string, velocity, muted, dead, swell, part, chord, stroke}[],
  *   bar: number, duration: number }} times in seconds from the start of the progression; notes hit
  *   together share a stroke number. `part` is the guitar playing the note (null: all of them).
  */
@@ -42,7 +38,7 @@ export function buildPerformance(progression, { mode, bpm }) {
     const start = index * bar;
     const strings = stringsOf(chord.frets, genre.tuning);
     const bars = progression.chords.length;
-    const build = genre.strum.build ?? 1;
+    const build = (mode === 'arpeggio' && genre.arpeggio.build) || 1;
     const growth = build + ((1 - build) * index) / Math.max(1, bars - 1);
     const add = (n, at, len, velocity, extra = {}) =>
       notes.push({
@@ -53,7 +49,6 @@ export function buildPerformance(progression, { mode, bpm }) {
         velocity: velocity * growth,
         muted: false,
         dead: false,
-        slide: 0,
         swell: 0,
         part: null,
         chord: index,
@@ -65,30 +60,14 @@ export function buildPerformance(progression, { mode, bpm }) {
     };
 
     if (mode === 'strum') {
-      const { spread, pattern, fill, tremolo } = genre.strum;
+      const { spread, pattern, fill } = genre.strum;
       for (const ev of index === bars - 1 && fill ? fill : pattern) {
         const at = swing(ev.at);
-        if (ev.dead) slap(at, ev.vel);
-        else {
-          hit(strings, ev).forEach((n, k) => {
-            add(n, at, ev.len, ev.vel * (1 - k * 0.03), {
-              time: start + at * beat + k * spread * (ev.strings === 'top' ? 0.3 : 1),
-              muted: !!ev.mute,
-              slide: ev.slide || 0,
-              part: ev.part ?? null,
-            });
-          });
-        }
+        strummed(strings, ev).forEach((n, k) => {
+          const time = start + at * beat + k * spread;
+          add(n, at, ev.len, ev.vel * (1 - k * 0.03), { time, muted: !!ev.mute });
+        });
         stroke++;
-      }
-      if (tremolo) {
-        const { part, voices, from, perBeat, vel } = tremolo;
-        const count = Math.round((4 - from) * perBeat);
-        for (let k = 0; k < count; k++) {
-          const velocity = vel[0] + (vel[1] - vel[0]) * (k / (count - 1)) ** 1.5;
-          for (const n of strings.slice(-voices)) add(n, from + k / perBeat, 1 / perBeat, velocity, { part });
-          stroke++;
-        }
       }
     } else {
       // The pattern is written for six voices (0 = lowest); fewer voices follow its contour.
@@ -127,7 +106,6 @@ export function buildPerformance(progression, { mode, bpm }) {
 export function previewNotes(frets, genreId) {
   const genre = GENRES[genreId];
   const spread = Math.max(genre.strum.spread, 0.014);
-  const part = genre.strum.pattern[0].part ?? null;
   return stringsOf(frets, genre.tuning).map((n, k) => ({
     time: k * spread,
     duration: 2.4,
@@ -136,9 +114,8 @@ export function previewNotes(frets, genreId) {
     velocity: 0.9 - k * 0.03,
     muted: false,
     dead: false,
-    slide: 0,
     swell: 0,
-    part,
+    part: null,
     chord: 0,
     stroke: 0,
   }));

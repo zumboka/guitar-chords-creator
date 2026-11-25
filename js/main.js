@@ -6,7 +6,7 @@ import { diagramSVG } from './diagram.js';
 import { decodeState, encodeState } from './share.js';
 import { TUNINGS, keyLabel, pretty } from './theory.js';
 import { Player } from './audio.js';
-import { SOUNDS, recordingsNeeded } from './sounds.js';
+import { recordingsNeeded } from './sounds.js';
 import { prefetch } from './samples.js';
 
 const $ = (id) => document.getElementById(id);
@@ -63,7 +63,9 @@ function render() {
   updateLink();
   // Download the recordings now, so pressing play doesn't have to wait for them.
   const frets = progression.chords.map((c) => c.frets);
-  for (const [instrument, notes] of recordingsNeeded(SOUNDS[state.genre], frets, tuningId)) prefetch(instrument, notes);
+  for (const mode of ['strum', 'arpeggio']) {
+    for (const [instrument, notes] of recordingsNeeded(state.genre, mode, frets, tuningId)) prefetch(instrument, notes);
+  }
 }
 
 function updateLink() {

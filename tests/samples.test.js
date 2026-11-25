@@ -6,12 +6,13 @@ import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { generateProgression } from '../js/generator.js';
 import { buildPerformance, previewNotes, strokesOf } from '../js/performance.js';
 import { SampleBank, notesOf, sampleUrl } from '../js/samples.js';
-import { SOUNDS, recordingsNeeded, takesOf, voicesFor } from '../js/sounds.js';
+import { SOUNDS, recordingsNeeded, soundFor, takesOf, voicesFor } from '../js/sounds.js';
 import { RECORDINGS, centsOf, highest, nearest } from '../js/recordings.js';
 import { SHAPES, voicingsFor } from '../js/voicings.js';
 import { QUALITIES } from '../js/theory.js';
 import { seededRandom } from '../js/dsp.js';
 
+const MODES = ['strum', 'arpeggio'];
 const root = new URL('../', import.meta.url);
 const path = (url) => fileURLToPath(new URL(url, root));
 
@@ -26,11 +27,34 @@ function allShapes(tuning, qualities = Object.keys(QUALITIES)) {
 
 test('every genre has a sound made of recorded instruments', () => {
   assert.deepEqual(Object.keys(SOUNDS).sort(), Object.keys(GENRES).sort());
-  for (const sound of Object.values(SOUNDS)) {
-    const used = takesOf(sound).map((t) => t.instrument);
-    if (sound.chords) used.push(...sound.chords.ringing, ...sound.chords.muted);
-    for (const instrument of used) assert.ok(RECORDINGS[instrument], instrument);
+  for (const id of GENRE_IDS) {
+    for (const mode of MODES) {
+      const sound = soundFor(id, mode);
+      const used = takesOf(sound).map((t) => t.instrument);
+      if (sound.chords) used.push(...sound.chords.ringing, ...sound.chords.muted);
+      for (const instrument of used) assert.ok(RECORDINGS[instrument], instrument);
+    }
   }
+});
+
+test('strums of Neo Soul and Post Rock are free of extra effects, and sound nothing alike', () => {
+  const neoSoul = soundFor('neo-soul', 'strum');
+  const postRock = soundFor('post-rock', 'strum');
+  for (const sound of [neoSoul, postRock]) {
+    assert.ok(!sound.delay && !sound.chorus && !sound.wobble, 'no echo, no chorus');
+    assert.ok(sound.reverb.mix <= 0.15 && sound.reverb.seconds <= 2, 'only a small room');
+  }
+  assert.ok(soundFor('post-rock', 'arpeggio').delay, 'the arpeggio keeps its echo');
+  const instruments = (sound) => takesOf(sound).map((t) => t.instrument);
+  for (const mode of MODES) {
+    for (const instrument of instruments(soundFor('neo-soul', mode))) {
+      assert.ok(!instruments(soundFor('post-rock', mode)).includes(instrument));
+    }
+  }
+  assert.equal(takesOf(neoSoul).length, 1);
+  const [left, right] = takesOf(postRock);
+  assert.ok(left.pan < 0 && right.pan > 0);
+  assert.notEqual(left.instrument, right.instrument, 'two performances, not a copy');
 });
 
 test('every recording in the table is there, in the format it claims, and none is left over', () => {
@@ -65,8 +89,11 @@ test('the tuning corrections are small', () => {
 test('every note any chord shape can play has a recording in the note-by-note sounds', () => {
   for (const id of GENRE_IDS) {
     if (SOUNDS[id].chords) continue;
-    for (const [instrument, notes] of recordingsNeeded(SOUNDS[id], allShapes(GENRES[id].tuning), GENRES[id].tuning)) {
-      for (const midi of notes) assert.ok(existsSync(path(sampleUrl(instrument, midi))), `${instrument} ${midi}`);
+    const { tuning } = GENRES[id];
+    for (const mode of MODES) {
+      for (const [instrument, notes] of recordingsNeeded(id, mode, allShapes(tuning), tuning)) {
+        for (const midi of notes) assert.ok(existsSync(path(sampleUrl(instrument, midi))), `${instrument} ${midi}`);
+      }
     }
   }
 });
@@ -75,8 +102,10 @@ test('metalcore: every power chord shape plays from existing recordings, moved b
   const sound = SOUNDS.metalcore;
   const { tuning } = GENRES.metalcore;
   for (const frets of allShapes(tuning, ['5'])) {
-    for (const [instrument, notes] of recordingsNeeded(sound, [frets], tuning)) {
-      for (const midi of notes) assert.ok(existsSync(path(sampleUrl(instrument, midi))), `${instrument} ${midi}`);
+    for (const mode of MODES) {
+      for (const [instrument, notes] of recordingsNeeded('metalcore', mode, [frets], tuning)) {
+        for (const midi of notes) assert.ok(existsSync(path(sampleUrl(instrument, midi))), `${instrument} ${midi}`);
+      }
     }
   }
   const rng = seededRandom(31);
@@ -96,28 +125,22 @@ test('metalcore: every power chord shape plays from existing recordings, moved b
 test('every guitar part of a genre has a guitar to play it', () => {
   const rng = seededRandom(33);
   for (const id of GENRE_IDS) {
-    const guitars = takesOf(SOUNDS[id]).length;
-    for (const mode of ['strum', 'arpeggio']) {
+    for (const mode of MODES) {
+      const guitars = takesOf(soundFor(id, mode)).length;
       const { notes } = buildPerformance(generateProgression(id, rng), { mode, bpm: 100 });
       for (const n of notes) assert.ok(n.part === null || (n.part >= 0 && n.part < guitars), `${id}: part ${n.part}`);
     }
   }
 });
 
-test('Neo Soul and Post Rock share no recordings', () => {
-  const instruments = (id) => takesOf(SOUNDS[id]).map((t) => t.instrument);
-  for (const instrument of instruments('neo-soul')) assert.ok(!instruments('post-rock').includes(instrument));
-});
-
 test('what is loaded for a playback is what it plays', () => {
   const rng = seededRandom(32);
   for (const id of GENRE_IDS) {
-    const sound = SOUNDS[id];
     const p = generateProgression(id, rng);
     const frets = p.chords.map((c) => c.frets);
-    for (const mode of ['strum', 'arpeggio']) {
-      const needed = recordingsNeeded(sound, frets, GENRES[id].tuning, mode);
-      const both = recordingsNeeded(sound, frets, GENRES[id].tuning);
+    for (const mode of MODES) {
+      const sound = soundFor(id, mode);
+      const needed = recordingsNeeded(id, mode, frets, GENRES[id].tuning);
       const { notes } = buildPerformance(p, { mode, bpm: 100 });
       const preview = previewNotes(frets[0], id);
       const strokes = sound.chords ? strokesOf(notes) : notes.map((n) => ({ ...n, midis: [n.midi] }));
@@ -127,7 +150,6 @@ test('what is loaded for a playback is what it plays', () => {
       strokes.forEach((stroke, k) => {
         for (const voice of voicesFor(sound, stroke, k)) {
           assert.ok(needed.get(voice.instrument)?.has(voice.midi), `${id} ${mode}: ${voice.instrument} ${voice.midi}`);
-          assert.ok(both.get(voice.instrument).has(voice.midi));
         }
       });
     }

@@ -4,7 +4,8 @@
 
 export const RECORDINGS = {
   // A Stratocaster without an amp (amp.js adds it): the neck pickup in mid-neck positions, and the
-  // bridge pickup with open strings wherever there is one. 40 (low E) to 78 (fret 14 on high E).
+  // bridge pickup with open strings wherever there is one and, as a second performance, further up
+  // the neck. 40 (low E) to 78 (fret 14 on high E).
   strat_neck: {
     type: 'flac',
     low: 40,
@@ -19,6 +20,14 @@ export const RECORDINGS = {
     cents: [
       8, 8, 8, 10, 6, 4, 10, 10, 9, 7, 8, 11, 11, 10, 10, 5, 13, 10, 15, 3,
       9, 5, 5, 6, 1, 6, 5, 5, 5, 4, 4, 4, 4, 3, -1, 2, 3, 0, 5,
+    ],
+  },
+  strat_bridge_up: {
+    type: 'flac',
+    low: 40,
+    cents: [
+      4, 10, 11, 7, 9, 8, 8, 9, 9, 14, 4, 6, 6, 8, 4, 9, 9, 12, 9, 9,
+      10, 8, 7, 6, 4, 5, 4, 4, 2, 3, 1, -2, 4, 1, 3, 1, 4, 2, -1,
     ],
   },
   // From a soundfont. Covers every note a chord shape can sound in any tuning, 38 (low D) to 78.

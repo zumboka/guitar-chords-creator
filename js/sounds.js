@@ -7,7 +7,8 @@
 // stop otherwise (s). compress: evens out loud and soft. tone: EQ in Hz and dB, peaks as { freq,
 // gain, q }. chorus / wobble: modulated delays (wobble is LoFi tape wow). delay: a ping-pong echo;
 // its beats follow the tempo. crackle: level of vinyl noise. level: output gain, calibrated so every
-// genre plays at about -19.5 dBFS RMS (measured with renderOffline in audio.js).
+// genre plays at about -19.5 dBFS RMS (measured with renderOffline in audio.js). strum: what is
+// different when the chords are strummed.
 
 import { highest, nearest } from './recordings.js';
 import { notesOf } from './samples.js';
@@ -17,6 +18,7 @@ const DOUBLED = [{ pan: -0.6 }, { pan: 0.6, offset: 0.016, detune: 1.0025 }];
 
 export const SOUNDS = {
   // One guitar close up: neck pickup, a warm clean amp, compression and only a little plate reverb.
+  // Strums stay free of effects.
   'neo-soul': {
     instrument: 'strat_neck',
     takes: [{ cabinet: 3 }],
@@ -35,6 +37,7 @@ export const SOUNDS = {
     reverb: { mix: 0.1, seconds: 1.3, predelay: 0.012, lowpass: 5000 },
     release: 0.06,
     level: 0.52,
+    strum: { chorus: null, release: 0.1, level: 0.42 },
   },
   lofi: {
     instrument: 'electric_guitar_jazz',
@@ -51,8 +54,8 @@ export const SOUNDS = {
     reverb: { mix: 0.08, seconds: 1.2 },
     level: 0.95,
   },
-  // Two guitars far apart: bridge pickup, a chiming amp on the edge of breaking up, echoes that bounce
-  // between the sides and a big dark hall.
+  // Two guitars far apart: bridge pickup and a chiming amp on the edge of breaking up. Arpeggios echo
+  // through a big dark hall; strums are two performances of the same chords in a small room.
   'post-rock': {
     instrument: 'strat_bridge',
     takes: [
@@ -73,6 +76,25 @@ export const SOUNDS = {
     reverb: { mix: 0.32, seconds: 4.8, predelay: 0.04, lowpass: 4500 },
     release: 0.2,
     level: 0.56,
+    strum: {
+      takes: [
+        { pan: -0.55, cabinet: 4 },
+        { pan: 0.55, cabinet: 5, instrument: 'strat_bridge_up', offset: 0.012 },
+      ],
+      amp: {
+        tighten: 110,
+        drive: [1.4],
+        // prettier-ignore
+        cabinet: [
+          [60, -4], [120, 1], [250, 2], [400, 0.5], [700, -1], [1100, -2], [1700, -1], [2500, 4.5],
+          [3500, 9], [4800, 11], [6000, 8], [8000, -2], [11000, -16],
+        ],
+      },
+      delay: null,
+      reverb: { mix: 0.15, seconds: 2, predelay: 0.015, lowpass: 4500 },
+      release: 0.12,
+      level: 0.34,
+    },
   },
   shoegaze: {
     instrument: 'overdriven_guitar',
@@ -111,6 +133,12 @@ export const SOUNDS = {
     level: 0.074,
   },
 };
+
+/** How a genre sounds in a playback mode ('strum' or 'arpeggio'). */
+export function soundFor(genreId, mode) {
+  const { strum, ...sound } = SOUNDS[genreId];
+  return mode === 'strum' ? { ...sound, ...strum } : sound;
+}
 
 /** The takes playing every note of a sound, with defaults filled in. */
 export function takesOf(sound) {
@@ -164,8 +192,9 @@ export function voicesFor(sound, stroke, count) {
   return takes.map((_, t) => recordings[(count + (t * recordings.length) / takes.length) % recordings.length]);
 }
 
-/** Every recording a set of diagrams can need, in one playback mode or both: instrument -> MIDI notes. */
-export function recordingsNeeded(sound, fretsList, tuning, mode) {
+/** Every recording a set of diagrams needs in a genre's playback mode: instrument -> MIDI notes. */
+export function recordingsNeeded(genreId, mode, fretsList, tuning) {
+  const sound = soundFor(genreId, mode);
   const needed = new Map();
   const add = ({ instrument, midi }) => needed.set(instrument, (needed.get(instrument) || new Set()).add(midi));
   const notes = notesOf(fretsList, tuning);
@@ -173,8 +202,9 @@ export function recordingsNeeded(sound, fretsList, tuning, mode) {
     for (const { instrument } of takesOf(sound)) notes.forEach((midi) => add({ instrument, midi }));
     return needed;
   }
-  if (mode !== 'strum') for (const midi of notes) recordingsFor(sound, { midis: [midi] }).forEach(add);
-  if (mode !== 'arpeggio') {
+  if (mode === 'arpeggio') {
+    for (const midi of notes) recordingsFor(sound, { midis: [midi] }).forEach(add);
+  } else {
     for (const frets of fretsList) {
       const midis = notesOf([frets], tuning);
       for (const muted of [false, true]) recordingsFor(sound, { midis, muted }).forEach(add);
