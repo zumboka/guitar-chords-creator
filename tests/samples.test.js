@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { generateProgression } from '../js/generator.js';
 import { buildPerformance, previewNotes, strokesOf } from '../js/performance.js';
-import { notesOf, sampleUrl } from '../js/samples.js';
+import { SampleBank, notesOf, sampleUrl } from '../js/samples.js';
 import { SOUNDS, recordingsNeeded, takesOf, voicesFor } from '../js/sounds.js';
 import { RECORDINGS, centsOf, highest, nearest } from '../js/recordings.js';
 import { SHAPES, voicingsFor } from '../js/voicings.js';
@@ -165,4 +165,39 @@ test('notesOf lists each sounding note once, lowest first', () => {
     [43, 47, 48, 50, 52, 55, 59, 60, 64, 67],
   );
   assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropD'), [38, 45, 50]);
+});
+
+/** An audio context that decodes anything into a short tone. */
+const fakeContext = {
+  decodeAudioData: async () => ({
+    numberOfChannels: 1,
+    sampleRate: 22050,
+    getChannelData: () => Float32Array.from({ length: 22050 }, (_, i) => Math.sin(i / 10)),
+  }),
+};
+
+test('a briefly unavailable server does not stop playback; a lasting failure does, and can be retried', async () => {
+  const realFetch = globalThis.fetch;
+  const asked = [];
+  let failures = 2;
+  globalThis.fetch = async (url) => {
+    asked.push(url);
+    if (failures-- > 0) return { ok: false, status: 503 };
+    return { ok: true, arrayBuffer: async () => new ArrayBuffer(8) };
+  };
+  try {
+    const bank = new SampleBank(fakeContext);
+    await bank.load('strat_neck', [60]);
+    assert.equal(asked.length, 3, 'two failures, then the file');
+    assert.ok(bank.get('strat_neck', 60).gain > 0);
+
+    failures = Infinity;
+    await assert.rejects(bank.load('strat_neck', [61]), /HTTP 503/);
+    assert.throws(() => bank.get('strat_neck', 61));
+    failures = 0;
+    await bank.load('strat_neck', [61]);
+    assert.ok(bank.get('strat_neck', 61));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

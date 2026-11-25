@@ -19,14 +19,27 @@ export function notesOf(fretsList, tuning = 'standard') {
   return [...notes].sort((a, b) => a - b);
 }
 
+const ATTEMPTS = 3;
+const RETRY_DELAY = 300;
 const files = new Map();
+
+/** A file, tried again when the server is briefly unavailable. */
+async function fetchFile(url) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+      return await response.arrayBuffer();
+    } catch (error) {
+      if (attempt === ATTEMPTS) throw error;
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY * attempt));
+    }
+  }
+}
 
 function download(url) {
   if (!files.has(url)) {
-    const request = fetch(url).then((response) => {
-      if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-      return response.arrayBuffer();
-    });
+    const request = fetchFile(url);
     request.catch(() => files.delete(url));
     files.set(url, request);
   }
