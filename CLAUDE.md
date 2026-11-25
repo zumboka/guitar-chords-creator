@@ -18,7 +18,7 @@ The Godot asset-generation rules in the parent `C:\Users\malte\CLAUDE.md` don't 
 - Diagrams follow the user's reference chord boxes: name on top, `o` / `x` above a thick nut, dots, a barre bar, a `5fr` label higher up the neck.
 - Sound comes from recordings in `audio/<instrument>/<midi>.mp3` or `.flac`, not synthesis (the synthesised first version sounded poor to the user). `js/recordings.js` holds each instrument's range and measured tuning; re-measure it when a recording is added or replaced. Keep the attribution (CC BY, CC BY-SA and CC0) in `audio/README.md` and the page footer.
 - Metalcore plays recorded power chords through a simulated amp (`js/amp.js`). Strings must distort together, the sound must not stop between strokes or chords, and its tone follows the measured targets under "Metalcore tone" in `docs/spec.md`.
-- Strumming plays whole chords only, normally and typical of the genre: no extra effects and no extra notes (user's decision, 2026-11-25). Neo Soul and Post Rock must stay clearly apart (user's request, 2026-11-25); the targets are under "Neo Soul and Post Rock tone" in `docs/spec.md`.
+- Strumming plays whole chords only, normally and typical of the genre: no extra notes and nothing that rings on (user's decision, 2026-11-25), but with the genre's typical character in sound and rhythm (user's request, 2026-11-25). Neo Soul and Post Rock must stay clearly apart (user's request, 2026-11-25); the targets are under "Neo Soul and Post Rock tone" in `docs/spec.md`.
 - Loudness per genre is set by `level` in `js/sounds.js`, calibrated to about -19.5 dBFS RMS with `renderOffline` from `js/audio.js`; recalibrate after changing a genre's instrument or effects.
 - `docs/spec.md` is the agreed plan; update it when a decision changes.
 

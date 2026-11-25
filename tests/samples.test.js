@@ -37,14 +37,14 @@ test('every genre has a sound made of recorded instruments', () => {
   }
 });
 
-test('strums of Neo Soul and Post Rock are free of extra effects, and sound nothing alike', () => {
+test('Neo Soul and Post Rock each have a world of their own, strummed or picked', () => {
   const neoSoul = soundFor('neo-soul', 'strum');
   const postRock = soundFor('post-rock', 'strum');
-  for (const sound of [neoSoul, postRock]) {
-    assert.ok(!sound.delay && !sound.chorus && !sound.wobble, 'no echo, no chorus');
-    assert.ok(sound.reverb.mix <= 0.15 && sound.reverb.seconds <= 2, 'only a small room');
-  }
-  assert.ok(soundFor('post-rock', 'arpeggio').delay, 'the arpeggio keeps its echo');
+  assert.ok(neoSoul.chorus && neoSoul.compress && !neoSoul.delay, 'lush, close and without an echo');
+  assert.ok(postRock.delay && !postRock.chorus, 'echoes');
+  assert.ok(postRock.reverb.seconds > 2 * neoSoul.reverb.seconds, 'a hall against a plate');
+  // Strums must not ring on and on (the user's complaint about an earlier version).
+  assert.ok(postRock.reverb.mix <= 0.3 && postRock.reverb.seconds <= 4 && postRock.delay.mix <= 0.25 && postRock.delay.feedback <= 0.35);
   const instruments = (sound) => takesOf(sound).map((t) => t.instrument);
   for (const mode of MODES) {
     for (const instrument of instruments(soundFor('neo-soul', mode))) {

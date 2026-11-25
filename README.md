@@ -10,16 +10,16 @@ Generate four-chord guitar progressions that actually sound like your genre, see
 - **Playback** strummed (with a rhythm typical of the genre) or as an arpeggio, with tempo, loop, and click-a-chord to hear one on its own.
 - **Share links:** the URL holds the exact progression and diagrams.
 
-Standard tuning, except Metalcore in Drop D (the low string tuned down to D; its diagrams name the strings). The sound comes from guitar recordings, tuned and levelled as they load, with effects per genre: chorus, compression, echo, reverb, and tape wobble with vinyl crackle for LoFi. Most genres play one recorded note per string. Strumming always plays the whole chord and nothing else, in a rhythm typical of the genre. Neo Soul is one dry Stratocaster close up (neck pickup, a warm clean amp); Post Rock is two far apart (bridge pickup, a crisp clean amp), with echoes and a big hall only in the arpeggio. Metalcore plays two rhythm guitars, left and right: whole power chords and palm mutes recorded straight from the guitar, each side through its own simulated high-gain amp and speaker, so the strings distort together.
+Standard tuning, except Metalcore in Drop D (the low string tuned down to D; its diagrams name the strings). The sound comes from guitar recordings, tuned and levelled as they load, with effects per genre: chorus, compression, echo, reverb, and tape wobble with vinyl crackle for LoFi. Most genres play one recorded note per string. Strumming always plays the whole chord, in a rhythm typical of the genre. Neo Soul is one Stratocaster close up (neck pickup, a warm compressed amp, a slow chorus, slaps on the backbeat); Post Rock is two far apart (bridge pickup, a chiming amp, bouncing echoes, a hall, a build-up from quiet to loud). Metalcore plays two rhythm guitars, left and right: whole power chords and palm mutes recorded straight from the guitar, each side through its own simulated high-gain amp and speaker, so the strings distort together.
 
 ## How the chords fit the genre
 
 | Genre | What makes it fit | Example |
 |---|---|---|
-| Neo Soul | 9th, 11th and 13th chords, secondary dominants, tritone substitutes; never a plain triad; a lazy, swung strum | Dm9 – G13 – Cmaj9 – Am9 |
+| Neo Soul | 9th, 11th and 13th chords, secondary dominants, tritone substitutes; never a plain triad; a lazy, swung strum with slaps on 2 and 4 | Dm9 – G13 – Cmaj9 – Am9 |
 | LoFi | mellow maj7, m7 and 9th chords, stepwise descents, the borrowed minor iv | Fmaj7 – Em7 – Dm7 – Cmaj7 |
 | Punk | power chords, the I–V–vi–IV family, relentless downstrokes | E5 – B5 – C♯5 – A5 |
-| Post Rock | add9, sus and maj7 chords over open strings; a steady, straight strum, a ringing arpeggio | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
+| Post Rock | add9, sus and maj7 chords over open strings; slow, echoing strums that build up, a ringing arpeggio | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords with the open B and E strings droning through them, fuzz and huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
 | Metalcore | Drop D: one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
 
@@ -33,7 +33,7 @@ Each genre has 5 to 8 progression patterns in Roman numerals (`js/genres.js`). O
 - every shape is playable: a stretch of at most 4 frets and at most 4 fingers;
 - every progression has four different chords and follows its genre's rules, over 1,500 random progressions per genre;
 - playback only ever plays the diagram's own notes, inside the chord's bar, one note per string and guitar at a time;
-- strumming plays whole chords only: every string of the diagram, or its top four on an upstroke;
+- strumming plays whole chords only: every string of the diagram, or its top four on an upstroke (Neo Soul also slaps them all);
 - Metalcore never leaves a gap (every stroke lasts until the next, over chord changes and around the loop), and its two guitars never play the same recording at once;
 - every note a chord shape can reach has a recording with a tuning correction, and share links survive a round trip.
 

@@ -14,7 +14,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Sound | Recorded guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
 | Metalcore sound | Changed on 2026-11-25: the user wanted more of a rhythm guitar, with seamless transitions from chord to chord; it sounded like rock. Now two guitars recorded without an amp (CC0: power chords, palm mutes and single notes by Carbonthief), each through a simulated high-gain amp, playing without gaps |
 | Neo Soul and Post Rock sound | Changed on 2026-11-25: the user found the two too similar (they shared the instrument and nearly all effects). Now a Stratocaster recorded clean (EGFxSet, CC BY 4.0) with its neck pickup for Neo Soul and its bridge pickup for Post Rock, and an amp, rhythm and space of their own |
-| Strumming | Decided by the user on 2026-11-25: chords are played normally and typical of the genre, with the genre's typical sound; no extra effects (such as ringing) and no extra notes. Enforced for every genre by a test |
+| Strumming | Decided by the user on 2026-11-25: chords are played normally and typical of the genre, with the genre's typical sound; no extra effects (such as the ringing of a second, tremolo-picked guitar) and no extra notes (bass notes, stabs, slides). And on 2026-11-25: every genre needs its typical character when strummed; the bare strums of Neo Soul and Post Rock had none. So whole chords only (a test enforces it for every genre), in the sound world the user likes in the arpeggios |
 | Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
 | Stack | Plain HTML/CSS/JavaScript (ES modules), no framework, no build step, no dependencies |
@@ -36,26 +36,27 @@ A website that generates guitar chord progressions of four different chords for 
 
 | Genre | Character | Example |
 |---|---|---|
-| Neo Soul | 9ths, 11ths, 13ths, secondary dominants, tritone subs; never a plain triad; a lazy, swung strum | Dm9 – G13 – Cmaj9 – Am9 |
+| Neo Soul | 9ths, 11ths, 13ths, secondary dominants, tritone subs; never a plain triad; a lazy, swung strum with slaps on 2 and 4 | Dm9 – G13 – Cmaj9 – Am9 |
 | LoFi | maj7, m7, 9ths, stepwise descents, borrowed iv | Fmaj7 – Em7 – Dm7 – Cmaj7 |
 | Punk | power chords, I–V–vi–IV family, eighth-note downstrokes | E5 – B5 – C♯5 – A5 |
-| Post Rock | add9, sus, maj7 over open strings; a steady, straight strum, a ringing arpeggio | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
+| Post Rock | add9, sus, maj7 over open strings; slow, echoing strums that build up, a ringing arpeggio | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords over droning open top strings, fuzz, chorus, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
 | Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
 
 ## Neo Soul and Post Rock tone
 
-From tone guides (guitarchalk, Seymour Duncan, Pickup Music, Guitar World, MusicRadar, Riffhard) and measurements of guitar recordings (Freesound previews, used for analysis only). The two must stay apart on every line. When strumming:
+From tone guides (guitarchalk, Seymour Duncan, Fender Play, Pickup Music, Guitar World, MusicRadar, Riffhard) and measurements of guitar recordings (Freesound previews, used for analysis only). The two must stay apart on every line. When strumming:
 
 | | Neo Soul | Post Rock |
 |---|---|---|
-| Guitar | one, neck pickup, mid-neck positions, warm clean amp with light compression | two performances of the same chords, bridge pickup, crisp clean amp just short of breaking up |
-| Place | centre (left and right the same) | wide: side signal about 6 dB below the middle, left and right balanced |
-| Rhythm | lazy and swung: down on 1 and 3, a light upstroke before the next, damped in between | straight, steady down-up eighths, equally loud in every bar |
-| Space | dry: a short plate | a small room; 30 dB down 0.4 s after the last chord |
-| Brightness | warm: spectral centre near 450 to 500 Hz | crisp: near 800 Hz |
+| Guitar | one, neck pickup, mid-neck positions, warm clean amp with compression and a slow chorus | two performances of the same chords, bridge pickup, a chiming amp that breaks up when played hard |
+| Place | centre, barely widened by the chorus | wide: side signal about 6 dB below the middle, left and right balanced |
+| Rhythm | rolled chords on 1 and 3, slaps on 2 and 4 that stop them, swung upstrokes into the next chord | slow downstrokes that leave room for the echo, eighths in the last bar |
+| Space | a plate, and silence after each slap (about 30 dB between chord and gap) | ping-pong dotted-eighth echo and a hall, 11 to 13 dB down 0.4 s after the last chord and about 20 dB after 1 s; more than that rings |
+| Dynamics | even | from quiet to loud over the four chords (3 to 6 dB) |
+| Brightness | warm: spectral centre near 500 to 600 Hz | crisp: near 750 to 850 Hz |
 
-The arpeggios go further: Neo Soul slaps the strings on 2 and 4; Post Rock rings into chords faded in by the second guitar, with dotted-eighth echoes, a big dark hall and a build-up over the four chords.
+The arpeggios, which the user is happy with, go further: Post Rock rings into chords faded in by the second guitar, with more echo and a bigger hall.
 
 ## Metalcore tone
 

@@ -3,11 +3,11 @@
 // Progressions are Roman numerals relative to the tonic ("bVI" = the chord on the lowered sixth
 // degree), each with a chord quality from theory.js. Lowercase numerals are minor chords.
 // Rhythms are in beats of a 4/4 bar; one chord lasts one bar. A strum hits every string of the
-// shape, an upstroke the top four. A `fill` replaces the pattern in the last bar. Arpeggios are
-// written for six voices (0 = lowest); those in `mutes` are palm-muted, 'x' is a slap on the
-// strings. `part` says which guitar picks them (the takes in sounds.js), `swells` adds a second one
-// fading in the chord, and `build` grows louder from that level to full over the four bars.
-// `tuning` names an entry of TUNINGS in theory.js.
+// shape, an upstroke the top four, each `spread` seconds after the last; a `slap` deadens them all.
+// A `fill` replaces the pattern in the last bar. Arpeggios are written for six voices (0 = lowest);
+// those in `mutes` are palm-muted, 'x' is a slap. `part` says which guitar picks them (the takes in
+// sounds.js), `swells` adds a second one fading in the chord. `build` grows louder from that level
+// to full over the four bars. `tuning` names an entry of TUNINGS in theory.js.
 
 const eighths = (vel = 1, off = 0.8) =>
   [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((at) => ({ at, dir: 'down', len: 0.46, vel: at % 1 ? off : vel }));
@@ -27,7 +27,7 @@ const riff = (steps) =>
 export const GENRES = {
   'neo-soul': {
     name: 'Neo Soul',
-    blurb: 'Lush 9ths and 13ths, chromatic turns and a lazy, behind-the-beat groove.',
+    blurb: 'Lush 9ths and 13ths, chromatic turns and a lazy groove with slaps on the backbeat.',
     tempo: 76,
     swing: 0.1,
     tuning: 'standard',
@@ -46,14 +46,17 @@ export const GENRES = {
       { id: 'dorian-vamp', mode: 'minor', chords: ['i:m11', 'IV:13', 'bVI:maj7', 'V:7#9'] },
     ],
     voicing: { center: 5, centerWeight: 0.12, open: 0.45, move: 0.45 },
-    // Laid back: a downstroke on 1 and 3, and a light, swung upstroke leading into the next one.
+    // Rolled chords on 1 and 3, stopped by a slap on the backbeat, and a light, swung upstroke
+    // leading into the next one.
     strum: {
-      spread: 0.011,
+      spread: 0.009,
       pattern: [
-        { at: 0, dir: 'down', len: 1.35, vel: 0.95 },
-        { at: 1.5, dir: 'up', len: 0.3, vel: 0.65 },
-        { at: 2, dir: 'down', len: 1.35, vel: 0.85 },
-        { at: 3.5, dir: 'up', len: 0.3, vel: 0.65 },
+        { at: 0, dir: 'down', len: 1, vel: 0.95, spread: 0.022 },
+        { at: 1, slap: true, vel: 0.5 },
+        { at: 1.5, dir: 'up', len: 0.4, vel: 0.65 },
+        { at: 2, dir: 'down', len: 1, vel: 0.85, spread: 0.022 },
+        { at: 3, slap: true, vel: 0.55 },
+        { at: 3.5, dir: 'up', len: 0.45, vel: 0.65 },
       ],
     },
     arpeggio: { step: 0.5, sequence: [0, 3, 'x', 4, 1, 5, 'x', 3], ring: 0.9, vel: 0.85 },
@@ -117,7 +120,7 @@ export const GENRES = {
 
   'post-rock': {
     name: 'Post Rock',
-    blurb: 'Open-string add9 and sus chords, crisp and wide, in a steady, driving strum.',
+    blurb: 'Open-string add9 and sus chords that echo through a wide hall and build from quiet to loud.',
     tempo: 108,
     swing: 0,
     tuning: 'standard',
@@ -134,12 +137,26 @@ export const GENRES = {
       { id: 'minor-climb', mode: 'minor', chords: ['i:m7', 'bVI:maj7', 'bIII:add9', 'bVII:sus2'] },
     ],
     voicing: { center: 2, centerWeight: 0.08, open: -0.45, openTop: -0.4, move: 0.1, variety: 0.6 },
-    // Straight, steady down-up eighths, leaning on 1 and 3.
+    // Slow strums that leave room for the echo, growing from quiet to loud; the last bar drives on
+    // in eighths.
     strum: {
-      spread: 0.007,
-      pattern: [0.95, 0.6, 0.8, 0.6, 0.9, 0.6, 0.8, 0.6].map((vel, i) =>
-        i % 2 ? { at: i / 2, dir: 'up', len: 0.5, vel } : { at: i / 2, dir: 'down', len: 1, vel },
-      ),
+      spread: 0.012,
+      build: 0.5,
+      pattern: [
+        { at: 0, dir: 'down', len: 2, vel: 0.95 },
+        { at: 2, dir: 'down', len: 1, vel: 0.75 },
+        { at: 3, dir: 'down', len: 1, vel: 0.7 },
+        { at: 3.5, dir: 'up', len: 0.5, vel: 0.5 },
+      ],
+      fill: [
+        { at: 0, dir: 'down', len: 1, vel: 0.95 },
+        { at: 1, dir: 'down', len: 1, vel: 0.75 },
+        { at: 1.5, dir: 'up', len: 0.5, vel: 0.6 },
+        { at: 2, dir: 'down', len: 1, vel: 0.85 },
+        { at: 2.5, dir: 'up', len: 0.5, vel: 0.65 },
+        { at: 3, dir: 'down', len: 1, vel: 0.9 },
+        { at: 3.5, dir: 'up', len: 0.5, vel: 0.7 },
+      ],
     },
     // Ringing eighths that the echo fills in, over chords faded in like a violin.
     arpeggio: {

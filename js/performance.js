@@ -38,7 +38,7 @@ export function buildPerformance(progression, { mode, bpm }) {
     const start = index * bar;
     const strings = stringsOf(chord.frets, genre.tuning);
     const bars = progression.chords.length;
-    const build = (mode === 'arpeggio' && genre.arpeggio.build) || 1;
+    const build = genre[mode].build ?? 1;
     const growth = build + ((1 - build) * index) / Math.max(1, bars - 1);
     const add = (n, at, len, velocity, extra = {}) =>
       notes.push({
@@ -63,10 +63,13 @@ export function buildPerformance(progression, { mode, bpm }) {
       const { spread, pattern, fill } = genre.strum;
       for (const ev of index === bars - 1 && fill ? fill : pattern) {
         const at = swing(ev.at);
-        strummed(strings, ev).forEach((n, k) => {
-          const time = start + at * beat + k * spread;
-          add(n, at, ev.len, ev.vel * (1 - k * 0.03), { time, muted: !!ev.mute });
-        });
+        if (ev.slap) slap(at, ev.vel);
+        else {
+          strummed(strings, ev).forEach((n, k) => {
+            const time = start + at * beat + k * (ev.spread ?? spread);
+            add(n, at, ev.len, ev.vel * (1 - k * 0.03), { time, muted: !!ev.mute });
+          });
+        }
         stroke++;
       }
     } else {

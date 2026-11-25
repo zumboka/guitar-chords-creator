@@ -17,8 +17,8 @@ import { notesOf } from './samples.js';
 const DOUBLED = [{ pan: -0.6 }, { pan: 0.6, offset: 0.016, detune: 1.0025 }];
 
 export const SOUNDS = {
-  // One guitar close up: neck pickup, a warm clean amp, compression and only a little plate reverb.
-  // Strums stay free of effects.
+  // One guitar close up: neck pickup, a warm clean amp, compression and a little plate reverb; a slow
+  // chorus makes the strums lush.
   'neo-soul': {
     instrument: 'strat_neck',
     takes: [{ cabinet: 3 }],
@@ -37,7 +37,12 @@ export const SOUNDS = {
     reverb: { mix: 0.1, seconds: 1.3, predelay: 0.012, lowpass: 5000 },
     release: 0.06,
     level: 0.52,
-    strum: { chorus: null, release: 0.1, level: 0.42 },
+    strum: {
+      chorus: { mix: 0.35, rate: 0.6, depth: 0.0018, pan: 0.35 },
+      reverb: { mix: 0.18, seconds: 1.6, predelay: 0.015, lowpass: 5000 },
+      release: 0.1,
+      level: 0.42,
+    },
   },
   lofi: {
     instrument: 'electric_guitar_jazz',
@@ -54,8 +59,9 @@ export const SOUNDS = {
     reverb: { mix: 0.08, seconds: 1.2 },
     level: 0.95,
   },
-  // Two guitars far apart: bridge pickup and a chiming amp on the edge of breaking up. Arpeggios echo
-  // through a big dark hall; strums are two performances of the same chords in a small room.
+  // Two guitars far apart: bridge pickup, a chiming amp that starts to break up when played hard,
+  // echoes that bounce between the sides and a big dark hall. Strums are two performances of the
+  // same chords.
   'post-rock': {
     instrument: 'strat_bridge',
     takes: [
@@ -83,17 +89,17 @@ export const SOUNDS = {
       ],
       amp: {
         tighten: 110,
-        drive: [1.4],
+        drive: [2],
         // prettier-ignore
         cabinet: [
           [60, -4], [120, 1], [250, 2], [400, 0.5], [700, -1], [1100, -2], [1700, -1], [2500, 4.5],
           [3500, 9], [4800, 11], [6000, 8], [8000, -2], [11000, -16],
         ],
       },
-      delay: null,
-      reverb: { mix: 0.15, seconds: 2, predelay: 0.015, lowpass: 4500 },
-      release: 0.12,
-      level: 0.34,
+      delay: { beats: 0.75, feedback: 0.35, mix: 0.22, lowpass: 3500 },
+      reverb: { mix: 0.3, seconds: 3.6, predelay: 0.035, lowpass: 5000 },
+      release: 0.16,
+      level: 0.33,
     },
   },
   shoegaze: {
