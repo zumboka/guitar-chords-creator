@@ -10,16 +10,16 @@ Generate four-chord guitar progressions that actually sound like your genre, see
 - **Playback** strummed (with a rhythm typical of the genre) or as an arpeggio, with tempo, loop, and click-a-chord to hear one on its own.
 - **Share links:** the URL holds the exact progression and diagrams.
 
-Standard tuning, except Metalcore in Drop D (the low string tuned down to D; its diagrams name the strings). The sound comes from guitar recordings, tuned and levelled as they load, with effects per genre: chorus, delay, reverb, and tape wobble with vinyl crackle for LoFi. Most genres play one recorded note per string. Metalcore plays two rhythm guitars, left and right: whole power chords and palm mutes recorded straight from the guitar, each side through its own simulated high-gain amp and speaker, so the strings distort together.
+Standard tuning, except Metalcore in Drop D (the low string tuned down to D; its diagrams name the strings). The sound comes from guitar recordings, tuned and levelled as they load, with effects per genre: chorus, compression, echo, reverb, and tape wobble with vinyl crackle for LoFi. Most genres play one recorded note per string. Neo Soul is one dry Stratocaster close up (neck pickup, a warm clean amp, thumb slaps); Post Rock is two far apart (bridge pickup, a chiming amp, bouncing echoes, a big hall). Metalcore plays two rhythm guitars, left and right: whole power chords and palm mutes recorded straight from the guitar, each side through its own simulated high-gain amp and speaker, so the strings distort together.
 
 ## How the chords fit the genre
 
 | Genre | What makes it fit | Example |
 |---|---|---|
-| Neo Soul | 9th, 11th and 13th chords, secondary dominants, tritone substitutes; never a plain triad | Dm9 – G13 – Cmaj9 – Am9 |
+| Neo Soul | 9th, 11th and 13th chords, secondary dominants, tritone substitutes; never a plain triad; rolled chords cut short by slaps on 2 and 4, stabs that slide in | Dm9 – G13 – Cmaj9 – Am9 |
 | LoFi | mellow maj7, m7 and 9th chords, stepwise descents, the borrowed minor iv | Fmaj7 – Em7 – Dm7 – Cmaj7 |
 | Punk | power chords, the I–V–vi–IV family, relentless downstrokes | E5 – B5 – C♯5 – A5 |
-| Post Rock | add9, sus and maj7 chords with ringing open strings | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
+| Post Rock | add9, sus and maj7 chords with ringing open strings, a second guitar tremolo-picking in swells, a build-up over the four chords | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords with the open B and E strings droning through them, fuzz and huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
 | Metalcore | Drop D: one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
 
@@ -32,7 +32,7 @@ Each genre has 5 to 8 progression patterns in Roman numerals (`js/genres.js`). O
 - every chord shape sounds exactly its chord name: the right bass note, every defining tone, nothing foreign;
 - every shape is playable: a stretch of at most 4 frets and at most 4 fingers;
 - every progression has four different chords and follows its genre's rules, over 1,500 random progressions per genre;
-- playback only ever plays the diagram's own notes, inside the chord's bar, one note per string at a time;
+- playback only ever plays the diagram's own notes, inside the chord's bar, one note per string and guitar at a time;
 - Metalcore never leaves a gap (every stroke lasts until the next, over chord changes and around the loop), and its two guitars never play the same recording at once;
 - every note a chord shape can reach has a recording with a tuning correction, and share links survive a round trip.
 
@@ -59,7 +59,7 @@ js/samples.js      loads the recordings
 js/recordings.js   every recorded instrument: range, format and measured tuning
 js/dsp.js          sample trimming and levelling, reverb, vinyl noise, clipping curves and speaker cabinets
 js/sounds.js       each genre's instrument and effects, and which recording plays a stroke
-js/amp.js          the high-gain amp (Metalcore)
+js/amp.js          the guitar amp, from clean to high gain
 js/audio.js        Web Audio playback
 js/nodes.js        small Web Audio helpers
 audio/             the guitar recordings (see audio/README.md)
@@ -71,4 +71,4 @@ docs/spec.md       the plan this was built from
 
 ## Credits
 
-Guitar recordings: the Musyng Kite soundfont via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts), licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), and the power chords, palm mutes and single notes by Carbonthief for Metalcore ([CC0](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Power_Chords_Std_DI/)). Details in [audio/README.md](audio/README.md).
+Guitar recordings: [EGFxSet](https://zenodo.org/records/7044411) by Hegel Pedroza, Gerardo Meza and Iran R. Roman ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) for Neo Soul and Post Rock, the Musyng Kite soundfont via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts), licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), and the power chords, palm mutes and single notes by Carbonthief for Metalcore ([CC0](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Power_Chords_Std_DI/)). Details in [audio/README.md](audio/README.md).

@@ -5,6 +5,8 @@ import { GENRES } from './genres.js';
 import { TUNINGS } from './theory.js';
 
 const MIN_DURATION = 0.02;
+// A slap deadens the strings almost at once (s).
+const SLAP = 0.06;
 
 function stringsOf(frets, tuning) {
   const open = TUNINGS[tuning].notes;
@@ -15,12 +17,17 @@ function stringsOf(frets, tuning) {
   return strings;
 }
 
-/** The strings a strum hits: all, or the top four on an upstroke. */
-const strummed = (strings, ev) => (ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings);
+/** The strings a stroke hits: all, the bass, all but the bass, or the top four on an upstroke. */
+function hit(strings, ev) {
+  if (ev.strings === 'bass') return strings.slice(0, 1);
+  if (ev.strings === 'top') return strings.slice(1);
+  return ev.dir === 'up' ? strings.slice().reverse().slice(0, 4) : strings;
+}
 
 /**
- * @returns {{ notes: {time, duration, midi, string, velocity, muted, chord, stroke}[], bar: number, duration: number }}
- *   times in seconds from the start of the progression; notes hit together share a stroke number.
+ * @returns {{ notes: {time, duration, midi, string, velocity, muted, dead, slide, swell, part, chord, stroke}[],
+ *   bar: number, duration: number }} times in seconds from the start of the progression; notes hit
+ *   together share a stroke number. `part` is the guitar playing the note (null: all of them).
  */
 export function buildPerformance(progression, { mode, bpm }) {
   const genre = GENRES[progression.genre];
@@ -34,57 +41,84 @@ export function buildPerformance(progression, { mode, bpm }) {
   progression.chords.forEach((chord, index) => {
     const start = index * bar;
     const strings = stringsOf(chord.frets, genre.tuning);
+    const bars = progression.chords.length;
+    const build = genre.strum.build ?? 1;
+    const growth = build + ((1 - build) * index) / Math.max(1, bars - 1);
+    const add = (n, at, len, velocity, extra = {}) =>
+      notes.push({
+        time: start + at * beat,
+        duration: Math.max(MIN_DURATION, Math.min(len, 4 - at) * beat),
+        midi: n.midi,
+        string: n.string,
+        velocity: velocity * growth,
+        muted: false,
+        dead: false,
+        slide: 0,
+        swell: 0,
+        part: null,
+        chord: index,
+        stroke,
+        ...extra,
+      });
+    const slap = (at, velocity) => {
+      for (const n of strings) add(n, at, SLAP / beat, velocity, { dead: true });
+    };
+
     if (mode === 'strum') {
-      const { spread, pattern, fill } = genre.strum;
-      const last = index === progression.chords.length - 1;
-      for (const ev of last && fill ? fill : pattern) {
-        const hits = strummed(strings, ev);
+      const { spread, pattern, fill, tremolo } = genre.strum;
+      for (const ev of index === bars - 1 && fill ? fill : pattern) {
         const at = swing(ev.at);
-        hits.forEach((n, k) => {
-          notes.push({
-            time: start + at * beat + k * spread,
-            duration: Math.max(MIN_DURATION, Math.min(ev.len, 4 - at) * beat),
-            midi: n.midi,
-            string: n.string,
-            velocity: ev.vel * (1 - k * 0.03),
-            muted: !!ev.mute,
-            chord: index,
-            stroke,
+        if (ev.dead) slap(at, ev.vel);
+        else {
+          hit(strings, ev).forEach((n, k) => {
+            add(n, at, ev.len, ev.vel * (1 - k * 0.03), {
+              time: start + at * beat + k * spread * (ev.strings === 'top' ? 0.3 : 1),
+              muted: !!ev.mute,
+              slide: ev.slide || 0,
+              part: ev.part ?? null,
+            });
           });
-        });
+        }
         stroke++;
+      }
+      if (tremolo) {
+        const { part, voices, from, perBeat, vel } = tremolo;
+        const count = Math.round((4 - from) * perBeat);
+        for (let k = 0; k < count; k++) {
+          const velocity = vel[0] + (vel[1] - vel[0]) * (k / (count - 1)) ** 1.5;
+          for (const n of strings.slice(-voices)) add(n, from + k / perBeat, 1 / perBeat, velocity, { part });
+          stroke++;
+        }
       }
     } else {
       // The pattern is written for six voices (0 = lowest); fewer voices follow its contour.
       const voices = strings.slice().sort((a, b) => a.midi - b.midi);
-      const { step, sequence, ring, vel, mutes = [] } = genre.arpeggio;
-      const top = Math.max(1, ...sequence);
+      const { step, sequence, ring, vel, mutes = [], part = null, swells } = genre.arpeggio;
+      const top = Math.max(1, ...sequence.filter((idx) => idx !== 'x'));
       sequence.forEach((idx, k) => {
         const beatPos = k * step;
         if (beatPos >= 4) return;
         const at = swing(beatPos);
-        const n = voices[Math.round((idx * (voices.length - 1)) / top)];
-        notes.push({
-          time: start + at * beat,
-          duration: Math.max(MIN_DURATION, Math.min(ring, 4 - at) * beat),
-          midi: n.midi,
-          string: n.string,
-          velocity: vel * (beatPos % 1 === 0 ? 1 : 0.82),
-          muted: mutes.includes(idx),
-          chord: index,
-          stroke: stroke++,
-        });
+        const velocity = vel * (beatPos % 1 === 0 ? 1 : 0.82);
+        if (idx === 'x') slap(at, vel * 0.55);
+        else add(voices[Math.round((idx * (voices.length - 1)) / top)], at, ring, velocity, { muted: mutes.includes(idx), part });
+        stroke++;
       });
+      if (swells) {
+        for (const n of strings) add(n, 0, 4, swells.vel, { part: swells.part, swell: swells.attack * beat });
+        stroke++;
+      }
     }
   });
 
-  // A string sounds one note at a time: a new pluck cuts off the note before it.
+  // A string of a guitar sounds one note at a time: a new pluck cuts off the note before it.
   notes.sort((a, b) => a.time - b.time);
   const ringing = new Map();
   for (const n of notes) {
-    const prev = ringing.get(n.string);
+    const key = `${n.part} ${n.string}`;
+    const prev = ringing.get(key);
     if (prev && prev.time + prev.duration > n.time) prev.duration = Math.max(0.01, n.time - prev.time);
-    ringing.set(n.string, n);
+    ringing.set(key, n);
   }
   return { notes, bar, duration: bar * progression.chords.length };
 }
@@ -93,6 +127,7 @@ export function buildPerformance(progression, { mode, bpm }) {
 export function previewNotes(frets, genreId) {
   const genre = GENRES[genreId];
   const spread = Math.max(genre.strum.spread, 0.014);
+  const part = genre.strum.pattern[0].part ?? null;
   return stringsOf(frets, genre.tuning).map((n, k) => ({
     time: k * spread,
     duration: 2.4,
@@ -100,6 +135,10 @@ export function previewNotes(frets, genreId) {
     string: n.string,
     velocity: 0.9 - k * 0.03,
     muted: false,
+    dead: false,
+    slide: 0,
+    swell: 0,
+    part,
     chord: 0,
     stroke: 0,
   }));

@@ -5,22 +5,24 @@ import { GENRES } from './genres.js';
 import { SOUNDS, recordingsNeeded, takesOf, voicesFor } from './sounds.js';
 import { createAmp } from './amp.js';
 import { impulseResponse, seededRandom, vinylNoise } from './dsp.js';
-import { filter } from './nodes.js';
+import { filter, gain, series } from './nodes.js';
 import { buildPerformance, previewNotes, strokesOf } from './performance.js';
 import { SampleBank } from './samples.js';
 
 const NOTE_LEVEL = 0.5;
+const ATTACK = 0.002;
 const RELEASE = 0.12;
-const MUTED_RELEASE = 0.06;
-const PALM_MUTE = 700;
 const LOOKAHEAD = 0.3;
-// How far strokes stray from the beat (s), also for the two tight guitars of a metal sound.
+// How far strokes stray from the beat (s), also for the two guitars of a tight sound.
 const JITTER = 0.008;
 const TIGHT_JITTER = 0.005;
-// Through an amp every string sounds until just before the next stroke, when the pick or hand stops
+// In a tight sound every string sounds until just before the next stroke, when the pick or hand stops
 // it: distortion would drag out a slow release into the next chord.
 const DAMP = 0.01;
 const CHOKE = 0.006;
+// A slide stays on the fret it starts from for a moment, then moves (s).
+const SLIDE_HOLD = 0.03;
+const SLIDE_TIME = 0.06;
 
 /** Loads the recordings a set of diagrams needs to be played in a genre's sound and tuning. */
 function loadNotes(bank, genreId, fretsList, mode) {
@@ -45,21 +47,60 @@ function modulatedDelay(ctx, base, rate, depth, oscillators) {
   return delay;
 }
 
-function createMaster(ctx) {
-  const compressor = ctx.createDynamicsCompressor();
-  compressor.threshold.value = -18;
-  compressor.knee.value = 12;
-  compressor.ratio.value = 3;
-  compressor.attack.value = 0.005;
-  compressor.release.value = 0.25;
-  const gain = ctx.createGain();
-  gain.gain.value = 0.9;
-  compressor.connect(gain);
-  gain.connect(ctx.destination);
-  return compressor;
+function compressor(ctx, { threshold, knee = 12, ratio, attack, release }) {
+  const node = ctx.createDynamicsCompressor();
+  node.threshold.value = threshold;
+  node.knee.value = knee;
+  node.ratio.value = ratio;
+  node.attack.value = attack;
+  node.release.value = release;
+  return node;
 }
 
-/** input -> [wobble] -> EQ -> dry + chorus + delay + reverb -> out -> destination. */
+function createMaster(ctx) {
+  const input = compressor(ctx, { threshold: -18, ratio: 3, attack: 0.005, release: 0.25 });
+  series(input, gain(ctx, 0.9), ctx.destination);
+  return input;
+}
+
+function panner(ctx, position) {
+  const node = ctx.createStereoPanner();
+  node.pan.value = position;
+  return node;
+}
+
+/** An echo that bounces from side to side, right first, getting darker. @returns {{ input, output, delays }} */
+function pingPong(ctx, { feedback, mix, lowpass }) {
+  const output = gain(ctx, mix);
+  const [first, second] = [0.8, -0.8].map((position) => {
+    const delay = ctx.createDelay(2);
+    const damp = filter(ctx, 'lowpass', lowpass, 0.7);
+    series(delay, damp, panner(ctx, position), output);
+    return { delay, damp };
+  });
+  series(first.damp, gain(ctx, feedback), second.delay);
+  series(second.damp, gain(ctx, feedback), first.delay);
+  return { input: first.delay, output, delays: [first.delay, second.delay] };
+}
+
+/** A room or hall: [pre-delay] -> [tone] -> noise that fades. @returns {{ input, output }} */
+function createReverb(ctx, { seconds, predelay, lowpass }) {
+  const convolver = ctx.createConvolver();
+  const channels = impulseResponse({ sampleRate: ctx.sampleRate, seconds, rng: seededRandom(7) });
+  const impulse = ctx.createBuffer(2, channels[0].length, ctx.sampleRate);
+  channels.forEach((data, i) => impulse.getChannelData(i).set(data));
+  convolver.buffer = impulse;
+  const nodes = [convolver];
+  if (lowpass) nodes.unshift(filter(ctx, 'highpass', 150, 0.7), filter(ctx, 'lowpass', lowpass, 0.7));
+  if (predelay) {
+    const delay = ctx.createDelay(0.2);
+    delay.delayTime.value = predelay;
+    nodes.unshift(delay);
+  }
+  return { input: nodes[0], output: series(...nodes) };
+}
+
+/** input -> [wobble] -> [compressor] -> EQ -> dry + chorus + delay + reverb -> out -> destination. */
 function buildChain(ctx, sound, destination) {
   const oscillators = [];
   const input = ctx.createGain();
@@ -70,64 +111,39 @@ function buildChain(ctx, sound, destination) {
   };
 
   if (sound.wobble) then(modulatedDelay(ctx, 0.01, sound.wobble.rate, sound.wobble.depth, oscillators));
+  if (sound.compress) then(compressor(ctx, sound.compress));
   then(filter(ctx, 'highpass', sound.tone.highpass, 0.7));
-  for (const peak of sound.tone.peaks || []) {
-    const eq = filter(ctx, 'peaking', peak.freq, peak.q);
-    eq.gain.value = peak.gain;
-    then(eq);
-  }
+  for (const peak of sound.tone.peaks || []) then(filter(ctx, 'peaking', peak.freq, peak.q, peak.gain));
   then(filter(ctx, 'lowpass', sound.tone.lowpass, 0.7));
 
-  const out = ctx.createGain();
-  out.gain.value = sound.level;
+  const out = gain(ctx, sound.level);
   head.connect(out);
 
   if (sound.chorus) {
-    const wet = ctx.createGain();
-    wet.gain.value = sound.chorus.mix;
-    const pan = ctx.createStereoPanner();
-    pan.pan.value = 0.5;
-    const chorus = modulatedDelay(ctx, 0.014, sound.chorus.rate, sound.chorus.depth, oscillators);
-    head.connect(chorus);
-    chorus.connect(wet);
-    wet.connect(pan);
-    pan.connect(out);
+    const { mix, rate, depth, pan = 0.5 } = sound.chorus;
+    series(head, modulatedDelay(ctx, 0.014, rate, depth, oscillators), gain(ctx, mix), panner(ctx, pan), out);
   }
 
-  let echo = null;
-  if (sound.delay) {
-    echo = ctx.createDelay(2);
-    const feedback = ctx.createGain();
-    feedback.gain.value = sound.delay.feedback;
-    const damp = filter(ctx, 'lowpass', 2800, 0.7);
-    const wet = ctx.createGain();
-    wet.gain.value = sound.delay.mix;
-    head.connect(echo);
-    echo.connect(damp);
-    damp.connect(feedback);
-    feedback.connect(echo);
-    damp.connect(wet);
-    wet.connect(out);
+  const echo = sound.delay && pingPong(ctx, sound.delay);
+  if (echo) {
+    head.connect(echo.input);
+    echo.output.connect(out);
   }
 
   if (sound.reverb) {
-    const reverb = ctx.createConvolver();
-    const channels = impulseResponse({ sampleRate: ctx.sampleRate, seconds: sound.reverb.seconds, rng: seededRandom(7) });
-    const ir = ctx.createBuffer(2, channels[0].length, ctx.sampleRate);
-    channels.forEach((data, i) => ir.getChannelData(i).set(data));
-    reverb.buffer = ir;
-    const wet = ctx.createGain();
-    wet.gain.value = sound.reverb.mix;
-    head.connect(reverb);
-    reverb.connect(wet);
-    wet.connect(out);
+    const reverb = createReverb(ctx, sound.reverb);
+    head.connect(reverb.input);
+    if (echo) echo.output.connect(reverb.input);
+    series(reverb.output, gain(ctx, sound.reverb.mix), out);
   }
 
   out.connect(destination);
   return {
     input,
     setTempo(bpm) {
-      if (echo) echo.delayTime.setTargetAtTime(Math.min(1.9, (sound.delay.beats * 60) / bpm), ctx.currentTime, 0.05);
+      if (!echo) return;
+      const time = Math.min(1.9, (sound.delay.beats * 60) / bpm);
+      for (const delay of echo.delays) delay.delayTime.setTargetAtTime(time, ctx.currentTime, 0.05);
     },
     dispose() {
       oscillators.forEach((lfo) => lfo.stop());
@@ -159,28 +175,22 @@ function openTakes(ctx, sound, destination) {
   const out = ctx.createGain();
   out.connect(destination);
   const inputs = takesOf(sound).map((take) => {
-    const input = ctx.createGain();
+    const input = gain(ctx, take.level);
     let head = input;
     if (sound.amp) {
       const amp = createAmp(ctx, sound.amp, take.cabinet);
       input.connect(amp.input);
       head = amp.output;
     }
-    if (take.pan) {
-      const pan = ctx.createStereoPanner();
-      pan.pan.value = take.pan;
-      head.connect(pan);
-      head = pan;
-    }
+    if (take.pan) head = series(head, panner(ctx, take.pan));
     head.connect(out);
     return input;
   });
   return { inputs, out };
 }
 
-/** The hand on the bridge dulls the string; ahead of an amp, the pick attack still comes through. */
-function palmMute(ctx, sound, start) {
-  if (!sound.amp) return filter(ctx, 'lowpass', PALM_MUTE, 0.6);
+/** Palm mute: the hand on the bridge dulls the string, but the pick attack still comes through. */
+function palmMute(ctx, start) {
   const dull = filter(ctx, 'lowpass', 4000, -6);
   dull.frequency.setValueAtTime(4000, start);
   dull.frequency.exponentialRampToValueAtTime(200, start + 0.06);
@@ -191,6 +201,7 @@ function palmMute(ctx, sound, start) {
 function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = true) {
   const sources = [];
   const takes = takesOf(sound);
+  const release = sound.release ?? RELEASE;
   const strokes = sound.chords ? strokesOf(notes) : notes.map((n) => ({ ...n, midis: [n.midi] }));
   const counts = new Map();
   const stray = (amount) => (humanize ? (Math.random() - 0.5) * amount : 0);
@@ -205,31 +216,42 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
     counts.set(kind, count + 1);
 
     voicesFor(sound, stroke, count).forEach((voice, t) => {
+      if (stroke.part != null && stroke.part !== t) return;
       const sample = bank.get(voice.instrument, voice.midi);
       // Separate performances stray separately; copies of one recording must stay together.
-      const late = takes[t].offset + (sound.amp ? stray(TIGHT_JITTER) : jitter);
+      const late = takes[t].offset + (sound.tight ? stray(TIGHT_JITTER) : jitter);
       const start = Math.max(ctx.currentTime, startAt + stroke.time + late);
-      const end = start + Math.max(0.02, stroke.duration - (sound.amp ? DAMP : 0));
+      const end = start + Math.max(0.02, stroke.duration - (sound.tight ? DAMP : 0));
       const source = ctx.createBufferSource();
       source.buffer = sample.buffer;
-      source.playbackRate.value = sample.rate * voice.rate;
-      const envelope = ctx.createGain();
-      const gain = level * sample.gain;
-      envelope.gain.setValueAtTime(0, start);
-      envelope.gain.linearRampToValueAtTime(gain, start + 0.002);
-      envelope.gain.setValueAtTime(gain, end);
-      if (sound.amp) envelope.gain.linearRampToValueAtTime(0, end + CHOKE);
-      else envelope.gain.setTargetAtTime(0, end, (stroke.muted ? MUTED_RELEASE : RELEASE) / 4);
-      if (stroke.muted && !voice.muted) {
-        const dull = palmMute(ctx, sound, start);
-        source.connect(dull);
-        dull.connect(envelope);
+      const rate = sample.rate * voice.rate;
+      if (stroke.slide) {
+        const from = rate * 2 ** (stroke.slide / 12);
+        source.playbackRate.setValueAtTime(from, start);
+        source.playbackRate.setValueAtTime(from, start + SLIDE_HOLD);
+        source.playbackRate.exponentialRampToValueAtTime(rate, start + SLIDE_HOLD + SLIDE_TIME);
       } else {
-        source.connect(envelope);
+        source.playbackRate.value = rate;
       }
-      envelope.connect(inputs[t]);
+      const envelope = ctx.createGain();
+      const peak = level * sample.gain;
+      const attack = stroke.swell || ATTACK;
+      envelope.gain.setValueAtTime(0, start);
+      envelope.gain.linearRampToValueAtTime(peak, start + attack);
+      let head = source;
+      if (stroke.dead) {
+        // A slap: the click of the string and a short thud.
+        envelope.gain.setTargetAtTime(0, start + 0.005, 0.009);
+        head = series(head, filter(ctx, 'highshelf', 1500, 0, 8));
+      } else {
+        envelope.gain.setValueAtTime(peak, Math.max(end, start + attack));
+        if (sound.tight) envelope.gain.linearRampToValueAtTime(0, end + CHOKE);
+        else envelope.gain.setTargetAtTime(0, Math.max(end, start + attack), release / 4);
+      }
+      if (stroke.muted && !voice.muted) head = series(head, palmMute(ctx, start));
+      series(head, envelope, inputs[t]);
       source.start(start, sample.offset);
-      source.stop(end + RELEASE * 2);
+      source.stop(end + release * 2);
       sources.push(source);
     });
   }
@@ -310,7 +332,7 @@ export class Player {
       setTimeout(() => {
         if (this.session !== session) return;
         if (session.loop) this.scheduleCycle(session, end);
-        else session.timers.push(setTimeout(() => this.stop(), (LOOKAHEAD + RELEASE) * 1000));
+        else session.timers.push(setTimeout(() => this.stop(), (LOOKAHEAD + (sound.release ?? RELEASE)) * 1000));
       }, Math.max(0, wait)),
     );
   }

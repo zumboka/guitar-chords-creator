@@ -29,11 +29,13 @@ for (const id of GENRE_IDS) {
           assert.ok(n.time + n.duration <= (n.chord + 1) * perf.bar + 0.2, 'stops by the end of its bar');
           assert.ok(n.duration > 0 && n.velocity > 0 && n.velocity <= 1);
         }
-        // One note at a time per string.
-        for (let s = 0; s < 6; s++) {
-          const onString = perf.notes.filter((n) => n.string === s);
-          for (let k = 1; k < onString.length; k++) {
-            assert.ok(onString[k - 1].time + onString[k - 1].duration <= onString[k].time + EPS);
+        // One note at a time per string of each guitar.
+        for (const part of new Set(perf.notes.map((n) => n.part))) {
+          for (let s = 0; s < 6; s++) {
+            const onString = perf.notes.filter((n) => n.part === part && n.string === s);
+            for (let k = 1; k < onString.length; k++) {
+              assert.ok(onString[k - 1].time + onString[k - 1].duration <= onString[k].time + EPS);
+            }
           }
         }
         if (mode === 'strum') {
@@ -95,6 +97,71 @@ test('the metalcore arpeggio picks single notes over a palm-muted root', () => {
     const root = Math.min(...p.chords[s.chord].frets.flatMap((f, k) => (f == null ? [] : [open[k] + f])));
     assert.equal(s.muted, s.midis[0] === root);
   }
+});
+
+test('neo soul: a slap on 2 and 4 stops the strings, and stabs on the top strings slide in from a fret below', () => {
+  const rng = seededRandom(25);
+  for (let run = 0; run < 20; run++) {
+    const p = generateProgression('neo-soul', rng);
+    const bpm = 60 + Math.floor(rng() * 60);
+    const beat = 60 / bpm;
+    for (const mode of ['strum', 'arpeggio']) {
+      const { notes, bar } = buildPerformance(p, { mode, bpm });
+      p.chords.forEach((chord, i) => {
+        const strings = chord.frets.flatMap((f, s) => (f == null ? [] : [s]));
+        const inBar = notes.filter((n) => n.chord === i);
+        for (const at of [1, 3]) {
+          const slap = inBar.filter((n) => n.dead && Math.abs(n.time - i * bar - at * beat) < EPS);
+          assert.deepEqual(slap.map((n) => n.string).sort(), strings, `${mode}: every string is slapped`);
+          const ringing = inBar.filter((n) => !n.dead && n.time < slap[0].time && n.time + n.duration > slap[0].time + EPS);
+          assert.equal(ringing.length, 0, `${mode}: nothing rings through the slap`);
+        }
+        const slides = inBar.filter((n) => n.slide);
+        if (mode === 'strum') assert.ok(slides.length > 0);
+        for (const n of slides) {
+          assert.equal(n.slide, -1);
+          assert.notEqual(n.string, strings[0], 'the bass stays out of the stabs');
+        }
+      });
+    }
+  }
+});
+
+test('post rock: one guitar strums while the other tremolo-picks the top notes, swelling and building up', () => {
+  const rng = seededRandom(26);
+  for (let run = 0; run < 20; run++) {
+    const p = generateProgression('post-rock', rng);
+    const { notes, bar } = buildPerformance(p, { mode: 'strum', bpm: 108 });
+    const loudest = [];
+    p.chords.forEach((chord, i) => {
+      const strings = chord.frets.flatMap((f, s) => (f == null ? [] : [s]));
+      const strummed = notes.filter((n) => n.chord === i && n.part === 0);
+      const picked = notes.filter((n) => n.chord === i && n.part === 1);
+      assert.deepEqual([...new Set(strummed.map((n) => n.string))].sort(), strings);
+      assert.deepEqual([...new Set(picked.map((n) => n.string))].sort(), strings.slice(-2));
+      for (const s of strings.slice(-2)) {
+        const line = picked.filter((n) => n.string === s);
+        assert.ok(line.length >= 12, 'fast repeated notes');
+        for (let k = 1; k < line.length; k++) assert.ok(line[k].velocity > line[k - 1].velocity, 'swelling');
+        assert.ok(line.at(-1).time + line.at(-1).duration > (i + 1) * bar - EPS - 1e-6, 'up to the next chord');
+      }
+      loudest.push(Math.max(...strummed.map((n) => n.velocity)));
+    });
+    for (let i = 1; i < 4; i++) assert.ok(loudest[i] > loudest[i - 1], 'each chord is louder than the last');
+  }
+});
+
+test('post rock: the arpeggio rings into chords faded in by the second guitar', () => {
+  const p = generateProgression('post-rock', seededRandom(27));
+  const { notes, bar } = buildPerformance(p, { mode: 'arpeggio', bpm: 108 });
+  p.chords.forEach((chord, i) => {
+    const swelled = notes.filter((n) => n.chord === i && n.part === 1);
+    assert.equal(swelled.length, chord.frets.filter((f) => f != null).length);
+    for (const n of swelled) assert.ok(n.swell > 0.2 && n.swell < bar && n.time === i * bar);
+    const picked = notes.filter((n) => n.chord === i && n.part === 0);
+    assert.equal(picked.length, 8);
+    assert.ok(picked.every((n) => n.swell === 0));
+  });
 });
 
 test('strokes group the notes hit together, lowest first', () => {

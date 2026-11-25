@@ -13,6 +13,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Metalcore tuning | Drop D (D A D G B E). Changed on 2026-11-22 with the user's OK while improving the Metalcore sound; every other genre uses standard tuning |
 | Sound | Recorded guitars (Musyng Kite soundfont, CC BY-SA 3.0), hosted in the repo under `audio/`, with an instrument and effects per genre. Changed on 2026-11-22: the first version synthesised the guitar, and the user found it didn't sound good |
 | Metalcore sound | Changed on 2026-11-25: the user wanted more of a rhythm guitar, with seamless transitions from chord to chord; it sounded like rock. Now two guitars recorded without an amp (CC0: power chords, palm mutes and single notes by Carbonthief), each through a simulated high-gain amp, playing without gaps |
+| Neo Soul and Post Rock sound | Changed on 2026-11-25: the user found the two too similar (they shared the instrument and nearly all effects). Now a Stratocaster recorded clean (EGFxSet, CC BY 4.0) with its neck pickup for Neo Soul and its bridge pickup for Post Rock, and an arrangement, amp and space of their own |
 | Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
 | Stack | Plain HTML/CSS/JavaScript (ES modules), no framework, no build step, no dependencies |
@@ -34,12 +35,25 @@ A website that generates guitar chord progressions of four different chords for 
 
 | Genre | Character | Example |
 |---|---|---|
-| Neo Soul | 9ths, 11ths, 13ths, secondary dominants, tritone subs; never a plain triad | Dm9 – G13 – Cmaj9 – Am9 |
+| Neo Soul | 9ths, 11ths, 13ths, secondary dominants, tritone subs; never a plain triad; thumb-and-finger comping with slaps on 2 and 4 and sliding stabs | Dm9 – G13 – Cmaj9 – Am9 |
 | LoFi | maj7, m7, 9ths, stepwise descents, borrowed iv | Fmaj7 – Em7 – Dm7 – Cmaj7 |
 | Punk | power chords, I–V–vi–IV family, eighth-note downstrokes | E5 – B5 – C♯5 – A5 |
-| Post Rock | add9, sus, maj7 with ringing open strings, picked patterns, delay and reverb | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
+| Post Rock | add9, sus, maj7 with ringing open strings; two guitars, tremolo picking and volume swells, dotted-eighth echo, hall, a build-up over the progression | Gmaj7 – Em(add9) – Cadd9 – Dsus4 |
 | Shoegaze | borrowed chords over droning open top strings, fuzz, chorus, huge reverb | Emaj7 – Cmaj7 – Aadd9 – Am(add9) |
 | Metalcore | minor keys in Drop D, one-finger power chords and the open low D, Aeolian and Phrygian moves, ringing accents against palm-muted chugs without a gap | D5 – B♭5 – F5 – C5 |
+
+## Neo Soul and Post Rock tone
+
+From tone guides (guitarchalk, Seymour Duncan, Guitar World, MusicRadar) and measurements of guitar recordings of both styles (Freesound previews, used for analysis only). The two must stay apart on every line:
+
+| | Neo Soul | Post Rock |
+|---|---|---|
+| Guitar | one, neck pickup, mid-neck positions | two, bridge pickup, open strings |
+| Place | centre (left and right the same) | wide: side signal about 6 dB below the middle, left and right balanced |
+| Space | dry: a short plate, silence after each slap | ping-pong dotted-eighth echo and a big dark hall, no gaps |
+| Dynamics | about 35 dB between notes and gaps | a wall that grows by 3 to 5 dB over the four chords |
+| Attack | sharp: rolled chords, thumb slaps, stabs sliding in from a fret below | soft: slow strums, tremolo picking and volume swells |
+| Brightness | warm: spectral centre near 500 Hz | chiming: near 900 Hz when strummed |
 
 ## Metalcore tone
 

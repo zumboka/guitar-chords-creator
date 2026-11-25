@@ -1,7 +1,8 @@
-// A high-gain guitar amp. The whole chord runs through one chain, so its strings distort together
-// (the growl of a real power chord) and the sound holds its level until the next stroke.
+// A guitar amp, from clean to high gain. The whole chord runs through one chain, so its strings
+// distort together (the growl of a real power chord) and, with enough gain, the sound holds its level
+// until the next stroke.
 //
-// input -> tighten -> boost -> clip -> filter -> clip -> cabinet
+// input -> tighten -> [boost] -> clip, [filter -> clip ...] -> cabinet
 
 import { cabinetImpulse, clipCurve, seededRandom } from './dsp.js';
 import { BUTTERWORTH, filter, gain, series } from './nodes.js';
@@ -31,29 +32,29 @@ function cabinetBuffer(ctx, points, seed) {
   return known.get(key);
 }
 
-function clipper(ctx, bias) {
+function clipper(ctx, bias, oversample) {
   const node = ctx.createWaveShaper();
   node.curve = clipCurve({ range: CLIP_RANGE, bias });
-  node.oversample = '4x';
+  node.oversample = oversample;
   return node;
 }
 
-/** @returns {{ input: AudioNode, output: AudioNode }} */
+/** One clipping stage per entry of `drive`. @returns {{ input: AudioNode, output: AudioNode }} */
 export function createAmp(ctx, { tighten, boost, drive, between, cabinet }, seed) {
   const input = filter(ctx, 'highpass', tighten, BUTTERWORTH);
+  const nodes = [input];
+  // The harder the clipping, the higher the overtones that would fold back.
+  const oversample = drive.length > 1 ? '4x' : '2x';
+  if (boost) nodes.push(filter(ctx, 'peaking', boost.freq, boost.q, boost.gain));
+  drive.forEach((amount, stage) => {
+    if (stage) {
+      nodes.push(filter(ctx, 'highpass', between.highpass, BUTTERWORTH));
+      nodes.push(filter(ctx, 'lowpass', between.lowpass, BUTTERWORTH));
+    }
+    nodes.push(gain(ctx, amount / CLIP_RANGE), clipper(ctx, stage ? 0 : 0.25, oversample));
+  });
   const speaker = ctx.createConvolver();
   speaker.normalize = false;
   speaker.buffer = cabinetBuffer(ctx, cabinet, seed);
-  const output = series(
-    input,
-    filter(ctx, 'peaking', boost.freq, boost.q, boost.gain),
-    gain(ctx, drive[0] / CLIP_RANGE),
-    clipper(ctx, 0.25),
-    filter(ctx, 'highpass', between.highpass, BUTTERWORTH),
-    filter(ctx, 'lowpass', between.lowpass, BUTTERWORTH),
-    gain(ctx, drive[1] / CLIP_RANGE),
-    clipper(ctx, 0),
-    speaker,
-  );
-  return { input, output };
+  return { input, output: series(...nodes, speaker) };
 }

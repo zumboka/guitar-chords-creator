@@ -3,15 +3,25 @@
 // sharp), measured in the sustain; playback divides it out.
 
 export const RECORDINGS = {
-  // Covers every note a chord shape can sound: 38 (low D in Drop D) to 78 (fret 14 on high E).
-  electric_guitar_clean: {
-    type: 'mp3',
-    low: 38,
+  // A Stratocaster without an amp (amp.js adds it): the neck pickup in mid-neck positions, and the
+  // bridge pickup with open strings wherever there is one. 40 (low E) to 78 (fret 14 on high E).
+  strat_neck: {
+    type: 'flac',
+    low: 40,
     cents: [
-      -5, -8, -9, 4, -2, -5, -3, -1, 1, -6, -4, 1, 1, -4, 3, 0, -4, 13, -2, 3, 1,
-      -3, 4, 2, -1, 1, 0, -1, -3, 0, 0, -2, -2, -2, 0, 2, -2, -2, 2, 1, 0,
+      9, 13, 18, 13, 13, 10, 9, 9, 6, 10, 8, 6, 10, 8, 8, 7, 6, 10, 12, 6,
+      13, 9, 9, 9, 9, 6, 7, 10, 7, 3, 4, 5, 8, -1, 3, 5, 5, 2, 6,
     ],
   },
+  strat_bridge: {
+    type: 'flac',
+    low: 40,
+    cents: [
+      8, 8, 8, 10, 6, 4, 10, 10, 9, 7, 8, 11, 11, 10, 10, 5, 13, 10, 15, 3,
+      9, 5, 5, 6, 1, 6, 5, 5, 5, 4, 4, 4, 4, 3, -1, 2, 3, 0, 5,
+    ],
+  },
+  // From a soundfont. Covers every note a chord shape can sound in any tuning, 38 (low D) to 78.
   electric_guitar_jazz: {
     type: 'mp3',
     low: 38,
@@ -28,7 +38,7 @@ export const RECORDINGS = {
       5, 5, 9, 9, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 5, 5, 5, 5, 5, 6,
     ],
   },
-  // Straight from the guitar, without an amp (amp.js adds it). Two performances, a and b, of each
+  // Also recorded without an amp, for Metalcore. Two performances, a and b, of each
   // power chord (root, fifth and octave), ringing and palm-muted, on the roots 40 (E) to 51 (D#).
   power_chord_a: { type: 'flac', low: 40, cents: [-3, -6, -4, -5, -6, -2, -3, -2, -2, -2, -3, -1] },
   power_chord_b: { type: 'flac', low: 40, cents: [-4, -7, -2, -3, -5, -3, -1, -2, -2, -2, -4, -2] },

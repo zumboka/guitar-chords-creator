@@ -2,11 +2,23 @@
 
 Files are named by MIDI note number (38 = low D in Drop D, 40 = low E, 78 = F♯5, fret 14 on the high E string). [`js/recordings.js`](../js/recordings.js) lists every folder with its range and how far each recording is out of tune; playback corrects that.
 
+## Stratocaster, for Neo Soul and Post Rock (CC BY 4.0)
+
+| Folder | Content | Used by |
+|---|---|---|
+| `strat_neck` | neck pickup, notes 40 to 78 played around the fifth to ninth fret where possible | Neo Soul |
+| `strat_bridge` | bridge pickup, notes 40 to 78 played on open strings and low frets where possible | Post Rock |
+
+**Source:** [EGFxSet](https://zenodo.org/records/7044411) (the clean recordings) by Hegel Pedroza, Gerardo Meza and Iran R. Roman, described in "EGFxSet: Electric guitar tones processed through real effects of distortion, modulation, delay and reverb", ISMIR Late Breaking Demo, 2022. Project page: [egfxset.github.io](https://egfxset.github.io).
+
+**License:** [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+
+**Changes:** 78 of the 690 clean recordings, chosen by string and fret; cut to start 4 ms before the attack and to 2.6 s / 2.0 s (neck) or 3.6 s / 2.6 s (bridge) below / from note 60, faded out, set to a common peak level, renamed to MIDI numbers, and saved as 22.05 kHz, 16-bit mono FLAC.
+
 ## Soundfont notes (CC BY-SA 3.0)
 
 | Folder | Notes | Used by |
 |---|---|---|
-| `electric_guitar_clean` | 38 to 78 | Neo Soul, Post Rock |
 | `electric_guitar_jazz` | 38 to 78 | LoFi |
 | `overdriven_guitar` | 38 to 78 | Punk, Shoegaze |
 

@@ -1,11 +1,13 @@
 // The guitar of each genre: recorded instruments (see audio/README.md) and their effects.
 //
 // instrument: folder in audio/. chords: recordings of whole power chords, for strums. takes: the
-// parts playing every note, each { pan, offset (s), detune (playback rate), instrument, cabinet };
-// one centred take unless listed. amp: a distortion amp per take (amp.js). tone: EQ in Hz and dB,
-// peaks as { freq, gain, q }. chorus / wobble: modulated delays (wobble is LoFi tape wow).
-// delay.beats follows the tempo. crackle: level of vinyl noise. level: output gain, calibrated so
-// every genre plays at about -19.5 dBFS RMS (measured with renderOffline in audio.js).
+// guitars, each { pan, offset (s), detune (playback rate), instrument, cabinet, level }; one centred
+// take unless listed. All of them play every note, except notes with a `part` (performance.js). amp: an
+// amp per take (amp.js). tight: strings stop dead before the next stroke. release: how slowly they
+// stop otherwise (s). compress: evens out loud and soft. tone: EQ in Hz and dB, peaks as { freq,
+// gain, q }. chorus / wobble: modulated delays (wobble is LoFi tape wow). delay: a ping-pong echo;
+// its beats follow the tempo. crackle: level of vinyl noise. level: output gain, calibrated so every
+// genre plays at about -19.5 dBFS RMS (measured with renderOffline in audio.js).
 
 import { highest, nearest } from './recordings.js';
 import { notesOf } from './samples.js';
@@ -14,12 +16,25 @@ import { notesOf } from './samples.js';
 const DOUBLED = [{ pan: -0.6 }, { pan: 0.6, offset: 0.016, detune: 1.0025 }];
 
 export const SOUNDS = {
+  // One guitar close up: neck pickup, a warm clean amp, compression and only a little plate reverb.
   'neo-soul': {
-    instrument: 'electric_guitar_clean',
-    tone: { highpass: 70, lowpass: 7000 },
-    chorus: { mix: 0.25, rate: 0.6, depth: 0.002 },
-    reverb: { mix: 0.22, seconds: 2.2 },
-    level: 1.35,
+    instrument: 'strat_neck',
+    takes: [{ cabinet: 3 }],
+    amp: {
+      tighten: 50,
+      drive: [1.1],
+      // prettier-ignore
+      cabinet: [
+        [60, 2], [100, 4], [160, 1], [300, 0], [700, -1.5], [1500, 0], [2500, 1.5], [4000, 3],
+        [5500, 3], [7000, -3], [10000, -16],
+      ],
+    },
+    compress: { threshold: -24, ratio: 3, attack: 0.03, release: 0.18 },
+    tone: { highpass: 60, lowpass: 9000 },
+    chorus: { mix: 0.12, rate: 0.5, depth: 0.0012, pan: 0 },
+    reverb: { mix: 0.1, seconds: 1.3, predelay: 0.012, lowpass: 5000 },
+    release: 0.06,
+    level: 0.52,
   },
   lofi: {
     instrument: 'electric_guitar_jazz',
@@ -36,13 +51,28 @@ export const SOUNDS = {
     reverb: { mix: 0.08, seconds: 1.2 },
     level: 0.95,
   },
+  // Two guitars far apart: bridge pickup, a chiming amp on the edge of breaking up, echoes that bounce
+  // between the sides and a big dark hall.
   'post-rock': {
-    instrument: 'electric_guitar_clean',
-    tone: { highpass: 80, lowpass: 8000 },
-    chorus: { mix: 0.15, rate: 0.3, depth: 0.0015 },
-    delay: { beats: 0.75, feedback: 0.4, mix: 0.3 },
-    reverb: { mix: 0.4, seconds: 4.5 },
-    level: 1.05,
+    instrument: 'strat_bridge',
+    takes: [
+      { pan: -0.5, cabinet: 4 },
+      { pan: 0.6, cabinet: 5, level: 1.6 },
+    ],
+    amp: {
+      tighten: 90,
+      drive: [1.6],
+      // prettier-ignore
+      cabinet: [
+        [60, 0], [120, 3], [250, 4], [400, 2], [700, 0], [1100, -3], [1700, -2], [2500, 2],
+        [3500, 6], [4800, 9], [6000, 6], [8000, -3], [11000, -18],
+      ],
+    },
+    tone: { highpass: 90, lowpass: 10000 },
+    delay: { beats: 0.75, feedback: 0.42, mix: 0.3, lowpass: 3500 },
+    reverb: { mix: 0.32, seconds: 4.8, predelay: 0.04, lowpass: 4500 },
+    release: 0.2,
+    level: 0.56,
   },
   shoegaze: {
     instrument: 'overdriven_guitar',
@@ -76,6 +106,7 @@ export const SOUNDS = {
       ],
     },
     tone: { highpass: 60, lowpass: 10000 },
+    tight: true,
     reverb: { mix: 0.04, seconds: 0.7 },
     level: 0.074,
   },
@@ -83,7 +114,14 @@ export const SOUNDS = {
 
 /** The takes playing every note of a sound, with defaults filled in. */
 export function takesOf(sound) {
-  return (sound.takes || [{}]).map((take) => ({ pan: 0, offset: 0, detune: 1, instrument: sound.instrument, ...take }));
+  return (sound.takes || [{}]).map((take) => ({
+    pan: 0,
+    offset: 0,
+    detune: 1,
+    level: 1,
+    instrument: sound.instrument,
+    ...take,
+  }));
 }
 
 /** A recording played at another pitch: the recorded note and the playback rate for it. */

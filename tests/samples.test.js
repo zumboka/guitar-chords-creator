@@ -55,7 +55,8 @@ test('the tuning corrections are small', () => {
   for (const [instrument, { cents }] of Object.entries(RECORDINGS)) {
     for (const c of cents) assert.ok(Number.isInteger(c) && Math.abs(c) <= 30, `${instrument}: ${c} cents`);
   }
-  assert.equal(centsOf('electric_guitar_clean', 38), -5);
+  assert.equal(centsOf('strat_neck', 40), 9);
+  assert.equal(centsOf('strat_bridge', 78), 5);
   assert.equal(nearest('power_chord_a', 38), 40);
   assert.equal(nearest('power_chord_a', 45), 45);
   assert.equal(nearest('power_chord_a', 60), 51);
@@ -90,6 +91,22 @@ test('metalcore: every power chord shape plays from existing recordings, moved b
       });
     }
   }
+});
+
+test('every guitar part of a genre has a guitar to play it', () => {
+  const rng = seededRandom(33);
+  for (const id of GENRE_IDS) {
+    const guitars = takesOf(SOUNDS[id]).length;
+    for (const mode of ['strum', 'arpeggio']) {
+      const { notes } = buildPerformance(generateProgression(id, rng), { mode, bpm: 100 });
+      for (const n of notes) assert.ok(n.part === null || (n.part >= 0 && n.part < guitars), `${id}: part ${n.part}`);
+    }
+  }
+});
+
+test('Neo Soul and Post Rock share no recordings', () => {
+  const instruments = (id) => takesOf(SOUNDS[id]).map((t) => t.instrument);
+  for (const instrument of instruments('neo-soul')) assert.ok(!instruments('post-rock').includes(instrument));
 });
 
 test('what is loaded for a playback is what it plays', () => {

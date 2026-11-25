@@ -3,9 +3,12 @@
 // Progressions are Roman numerals relative to the tonic ("bVI" = the chord on the lowered sixth
 // degree), each with a chord quality from theory.js. Lowercase numerals are minor chords.
 // Rhythms are in beats of a 4/4 bar; one chord lasts one bar. A strum hits every string of the
-// shape, an upstroke the top four. A `fill` replaces the pattern in the last bar. Arpeggios are
-// written for six voices (0 = lowest); those listed in `mutes` are palm-muted. `tuning` names an
-// entry of TUNINGS in theory.js.
+// shape, an upstroke the top four, `strings: 'bass'` only the lowest and 'top' all the others.
+// `dead` is a slap on the strings, `slide` starts that many semitones away. A `fill` replaces the
+// pattern in the last bar. Arpeggios are written for six voices (0 = lowest); those in `mutes` are
+// palm-muted, 'x' is a slap. `part` says which guitar plays (the takes in sounds.js), `tremolo`
+// and `swells` add a second guitar, and `build` grows louder from that level to full over the four
+// bars. `tuning` names an entry of TUNINGS in theory.js.
 
 const eighths = (vel = 1, off = 0.8) =>
   [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((at) => ({ at, dir: 'down', len: 0.46, vel: at % 1 ? off : vel }));
@@ -25,7 +28,7 @@ const riff = (steps) =>
 export const GENRES = {
   'neo-soul': {
     name: 'Neo Soul',
-    blurb: 'Lush 9ths and 13ths, chromatic turns and a lazy, behind-the-beat groove.',
+    blurb: 'Lush 9ths and 13ths, chromatic turns and a lazy, slapped groove on one warm, dry guitar.',
     tempo: 76,
     swing: 0.1,
     tuning: 'standard',
@@ -44,17 +47,21 @@ export const GENRES = {
       { id: 'dorian-vamp', mode: 'minor', chords: ['i:m11', 'IV:13', 'bVI:maj7', 'V:7#9'] },
     ],
     voicing: { center: 5, centerWeight: 0.12, open: 0.45, move: 0.45 },
+    // Thumb and fingers: chords rolled from the bass and cut short by a slap on 2 and 4, with stabs
+    // on the top strings that slide in from a fret below.
     strum: {
-      spread: 0.018,
+      spread: 0.03,
       pattern: [
-        { at: 0, dir: 'down', len: 1.4, vel: 0.9 },
-        { at: 1.5, dir: 'up', len: 0.45, vel: 0.5 },
-        { at: 2, dir: 'down', len: 0.9, vel: 0.75 },
-        { at: 3, dir: 'down', len: 0.3, vel: 0.45, mute: true },
-        { at: 3.5, dir: 'up', len: 0.5, vel: 0.55 },
+        { at: 0, dir: 'down', len: 0.95, vel: 0.95 },
+        { at: 1, dir: 'down', len: 0.1, vel: 0.55, dead: true },
+        { at: 1.5, dir: 'down', len: 0.3, vel: 0.65, strings: 'top', slide: -1 },
+        { at: 2, dir: 'down', len: 0.5, vel: 0.85, strings: 'bass' },
+        { at: 2.5, dir: 'down', len: 0.4, vel: 0.75, strings: 'top' },
+        { at: 3, dir: 'down', len: 0.1, vel: 0.6, dead: true },
+        { at: 3.5, dir: 'down', len: 0.35, vel: 0.65, strings: 'top', slide: -1 },
       ],
     },
-    arpeggio: { step: 0.5, sequence: [0, 2, 4, 3, 5, 3, 4, 2], ring: 1.5, vel: 0.8 },
+    arpeggio: { step: 0.5, sequence: [0, 3, 'x', 4, 1, 5, 'x', 3], ring: 0.9, vel: 0.85 },
   },
 
   lofi: {
@@ -115,7 +122,7 @@ export const GENRES = {
 
   'post-rock': {
     name: 'Post Rock',
-    blurb: 'Ringing add9 and sus chords over open strings that build, shimmer and echo.',
+    blurb: 'Ringing add9 and sus chords over open strings: two wide guitars that echo, swell and build.',
     tempo: 108,
     swing: 0,
     tuning: 'standard',
@@ -132,16 +139,26 @@ export const GENRES = {
       { id: 'minor-climb', mode: 'minor', chords: ['i:m7', 'bVI:maj7', 'bIII:add9', 'bVII:sus2'] },
     ],
     voicing: { center: 2, centerWeight: 0.08, open: -0.45, openTop: -0.4, move: 0.1, variety: 0.6 },
+    // One guitar strums slowly and lets everything ring; a second one tremolo-picks the top notes,
+    // swelling through the bar.
     strum: {
-      spread: 0.014,
+      spread: 0.022,
+      build: 0.45,
       pattern: [
-        { at: 0, dir: 'down', len: 2, vel: 0.9 },
-        { at: 2, dir: 'down', len: 1, vel: 0.6 },
-        { at: 3, dir: 'down', len: 0.5, vel: 0.65 },
-        { at: 3.5, dir: 'up', len: 0.5, vel: 0.5 },
+        { at: 0, dir: 'down', len: 2.5, vel: 0.9, part: 0 },
+        { at: 2.5, dir: 'down', len: 1.5, vel: 0.65, part: 0 },
       ],
+      tremolo: { part: 1, voices: 2, from: 1, perBeat: 6, vel: [0.08, 1] },
     },
-    arpeggio: { step: 0.25, sequence: [0, 2, 3, 4, 5, 4, 3, 2, 1, 2, 3, 4, 5, 4, 3, 2], ring: 1.5, vel: 0.7 },
+    // Ringing eighths that the echo fills in, over chords faded in like a violin.
+    arpeggio: {
+      step: 0.5,
+      sequence: [0, 2, 3, 4, 5, 4, 3, 2],
+      ring: 4,
+      vel: 0.85,
+      part: 0,
+      swells: { part: 1, vel: 0.42, attack: 2 },
+    },
   },
 
   shoegaze: {
