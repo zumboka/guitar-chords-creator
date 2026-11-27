@@ -83,7 +83,7 @@ export function diagramSVG(frets, label = '', tuning = 'standard') {
 
   if (tuning !== 'standard') {
     const y = TOP + FRETS * FRET_HEIGHT + 14;
-    // The dropped string is the one tuned apart from the others (in Drop B they all sit three semitones lower).
+    // A dropped string is one tuned apart from the others; in B standard all sit a fourth lower, and none is.
     const offsets = TUNINGS[tuning].notes.map((note, s) => note - TUNINGS.standard.notes[s]);
     const shared = offsets.find((o) => offsets.filter((p) => p === o).length > offsets.length / 2) ?? 0;
     TUNINGS[tuning].strings.forEach((name, s) => {

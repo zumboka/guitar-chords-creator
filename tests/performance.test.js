@@ -102,7 +102,7 @@ test('the metalcore arpeggio picks single notes over a palm-muted root', () => {
   const { notes } = buildPerformance(p, { mode: 'arpeggio', bpm: GENRES.metalcore.tempo });
   assert.equal(new Set(notes.map((n) => n.stroke)).size, notes.length, 'one note at a time');
   for (const n of notes) {
-    const open = TUNINGS.dropB.notes;
+    const open = TUNINGS.bStandard.notes;
     const root = Math.min(...p.chords[n.chord].frets.flatMap((f, k) => (f == null ? [] : [open[k] + f])));
     assert.equal(n.muted, n.midi === root);
   }

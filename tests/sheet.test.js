@@ -49,13 +49,13 @@ test('the image shows the genre, key, numerals and the four chord cards of the p
   assert.ok(svg.startsWith(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"`));
 });
 
-test('Metalcore images name the Drop B tuning and the strings under each diagram', () => {
+test('Metalcore images name the B standard tuning and the strings under each diagram', () => {
   const p = buildProgression('metalcore', 'six-seven-one-three', { tonic: 'B', mode: 'minor' }, null, seededRandom(1));
   const { svg } = chordSheet(p, '#b91c1c');
   assertWellFormed(svg);
-  assert.deepEqual(texts(svg, 'tuning'), ['Drop B tuning: B F♯ B E G♯ C♯']);
+  assert.deepEqual(texts(svg, 'tuning'), ['B standard tuning: B E A D F♯ B']);
   assert.deepEqual(texts(svg, 'name'), ['G', 'A', 'Bm', 'D']);
-  assert.equal(count(svg, 'tuning-note retuned'), 4, 'the low B highlighted in every diagram');
+  assert.equal(count(svg, 'tuning-note'), 24, 'six string names under each diagram');
 });
 
 test('every generated image is well-formed, with its cards inside it', () => {

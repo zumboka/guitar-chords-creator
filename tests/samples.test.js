@@ -107,7 +107,7 @@ test('the tuning corrections are small', () => {
   }
   assert.equal(centsOf('strat_neck', 40), 9);
   assert.equal(centsOf('strat_bridge', 78), 5);
-  assert.equal(centsOf('di_guitar', 76), -6);
+  assert.equal(centsOf('di_guitar', 74), -6);
 });
 
 test('every note any chord shape can play has a recording', () => {
@@ -188,7 +188,7 @@ test('notesOf lists each sounding note once, lowest first', () => {
     ]),
     [43, 47, 48, 50, 52, 55, 59, 60, 64, 67],
   );
-  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropB'), [35, 42, 47]);
+  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'bStandard'), [35, 40, 45]);
 });
 
 /** An audio context that decodes anything into a short tone. */

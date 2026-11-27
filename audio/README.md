@@ -1,6 +1,6 @@
 # Guitar recordings
 
-Files are named by MIDI note number (35 = low B in Drop B, 40 = low E, 78 = F♯5, fret 14 on the high E string). [`js/recordings.js`](../js/recordings.js) lists every folder with its range and how far each recording is out of tune; playback corrects that.
+Files are named by MIDI note number (35 = low B in Metalcore's B standard, 40 = low E, 78 = F♯5, fret 14 on the high E string). [`js/recordings.js`](../js/recordings.js) lists every folder with its range and how far each recording is out of tune; playback corrects that.
 
 ## Stratocaster, for Neo Soul, Post Rock and Shoegaze (CC BY 4.0)
 
@@ -33,7 +33,7 @@ Files are named by MIDI note number (35 = low B in Drop B, 40 = low E, 78 = F♯
 
 | Folder | Content |
 |---|---|
-| `di_guitar` | single notes of a seven-string guitar, 35 (low B) to 76; the full chords are built from them |
+| `di_guitar` | single notes of a seven-string guitar, 35 (low B) to 74; the full chords are built from them |
 
 **Source:** recorded by Carbonthief and published in the [Renoise instrument library](https://files.renoise.com/forum/downloads/Instruments/) as [Seven String Guitar](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Seven_String_Guitar/).
 

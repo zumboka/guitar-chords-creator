@@ -125,31 +125,13 @@ const OPEN = [
   ['sus4', 'B', [x, 2, 4, 4, 0, 0]],
 ].map(toShape);
 
-// Drop B, for Metalcore: every string a tone and a half lower than in standard tuning, the low one
-// two and a half. Full chords as metalcore guitarists play them: root, fifth and octave under one
-// finger across the three lowest strings with the rest of the chord on top, or the A shape of
-// standard tuning on the second string.
-const DROP_B = [
-  ['maj', 'C#', [2, 2, 2, 4, 5, 4]],
-  ['m', 'C#', [2, 2, 2, 4, 5, 3]],
-  ['7', 'C#', [2, 2, 2, 4, 3, 4]],
-  ['m7', 'C#', [2, 2, 2, 4, 3, 3]],
-  ['maj', 'G#', [x, 2, 4, 4, 4, 2]],
-  ['m', 'G#', [x, 2, 4, 4, 3, 2]],
-  ['7', 'G#', [x, 2, 4, 2, 4, 2]],
-  ['m7', 'G#', [x, 2, 4, 2, 3, 2]],
-].map(toShape);
-
-/** The same shape two frets lower: on the open strings, the chords of B and F#. */
-const lower = (shape) => ({
-  ...shape,
-  rootPc: mod(shape.rootPc - 2, 12),
-  frets: shape.frets.map((f) => (f == null ? f : f - 2)),
-});
+// B standard, for Metalcore: every string a fourth lower than in standard tuning, so every shape of
+// standard tuning works there too and sounds a fourth lower (the open E minor shape is B minor).
+const fourthDown = (shape) => ({ ...shape, rootPc: mod(shape.rootPc - 5, 12) });
 
 export const SHAPES = {
   standard: { movable: MOVABLE, open: OPEN },
-  dropB: { movable: DROP_B, open: DROP_B.map(lower) },
+  bStandard: { movable: MOVABLE.map(fourthDown), open: OPEN.map(fourthDown) },
 };
 
 const MAX_FRET = 14;

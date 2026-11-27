@@ -49,15 +49,14 @@ test('every generated diagram fits its five-fret box', () => {
   }
 });
 
-test('Drop B diagrams name the strings and highlight the dropped one', () => {
-  const svg = diagramSVG([0, 0, 0, 2, 3, 1], 'Bm', 'dropB');
-  assert.equal(count(svg, 'tuning-note'), 5);
-  assert.equal(count(svg, 'tuning-note retuned'), 1);
+test('B standard diagrams name the strings, none set apart since all are tuned alike', () => {
+  const svg = diagramSVG([0, 2, 2, 0, 0, 0], 'Bm', 'bStandard');
+  assert.equal(count(svg, 'tuning-note'), 6);
+  assert.equal(count(svg, 'tuning-note retuned'), 0);
   assert.deepEqual(
     [...svg.matchAll(/class="tuning-note[^"]*"[^>]*>([A-G]♯?)</g)].map((m) => m[1]),
-    ['B', 'F♯', 'B', 'E', 'G♯', 'C♯'],
+    ['B', 'E', 'A', 'D', 'F♯', 'B'],
   );
-  assert.ok(/class="tuning-note retuned" x="24"/.test(svg), 'the low string');
   assert.equal(count(diagramSVG([0, 2, 2, x, x, x], 'E5'), 'tuning-note'), 0, 'standard tuning needs no labels');
 });
 

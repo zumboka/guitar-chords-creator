@@ -49,18 +49,13 @@ test('every quality the genres use has shapes for all twelve roots, in the tunin
   }
 });
 
-test('Drop B: full chords on root, fifth and octave under one finger, or the A shape', () => {
-  assert.ok(matchesChord([0, 0, 0, 2, 3, 1], 11, 'm', 'dropB'), 'Bm on the open low strings');
-  assert.ok(!matchesChord([0, 0, 0, 2, 3, 1], 11, 'm'), 'not in standard tuning');
-  assert.deepEqual(voicingsFor(11, 'm', 'dropB').map(fretsToString), ['000231', 'x57765'], 'Bm open or at fret 5');
-  assert.deepEqual(voicingsFor(7, 'maj', 'dropB').map(fretsToString), ['888aba', 'x13331'], 'G at fret 8 or 1');
-  assert.deepEqual(voicingsFor(6, 'm7', 'dropB').map(fretsToString), ['x02010', '777988', 'xcecdc'], 'F#m7 open, at fret 7 or 12');
-  for (const quality of ['maj', 'm', '7', 'm7']) {
+test('B standard plays the shapes of standard tuning, a fourth lower', () => {
+  assert.ok(matchesChord([0, 2, 2, 0, 0, 0], 11, 'm', 'bStandard'), 'the open E minor shape is B minor');
+  assert.ok(matchesChord([null, 0, 2, 2, 2, 0], 4, 'maj', 'bStandard'), 'the open A shape is E');
+  assert.ok(matchesChord([null, 3, 2, 0, 1, 0], 7, 'maj', 'bStandard'), 'the open C shape is G');
+  for (const quality of Object.keys(QUALITIES)) {
     for (let root = 0; root < 12; root++) {
-      for (const frets of voicingsFor(root, quality, 'dropB')) {
-        const [low, fifth, octave] = frets;
-        assert.ok(low == null ? frets[1] != null : fifth === low && octave === low, `${fretsToString(frets)}`);
-      }
+      assert.deepEqual(voicingsFor(root, quality, 'bStandard'), voicingsFor((root + 5) % 12, quality), `${quality} on ${root}`);
     }
   }
 });

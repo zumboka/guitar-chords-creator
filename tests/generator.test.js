@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { buildProgression, chordsInKey, generateProgression, keysFor } from '../js/generator.js';
 import { QUALITIES, isDiatonic, parseRoman } from '../js/theory.js';
-import { isPlayable, matchesChord } from '../js/voicings.js';
+import { fingerCount, isPlayable, matchesChord } from '../js/voicings.js';
 import { seededRandom } from '../js/dsp.js';
 
 const RUNS = 1500;
@@ -91,9 +91,7 @@ for (const id of GENRE_IDS) {
         if (id === 'punk' || id === 'metalcore') {
           assert.ok(c.frets[0] != null || c.frets[1] != null, `${c.name} has its root on the low strings`);
         }
-        if (id === 'metalcore' && c.frets[0] != null) {
-          assert.ok(c.frets[1] === c.frets[0] && c.frets[2] === c.frets[0], `${c.name}: root, fifth and octave under one finger`);
-        }
+        if (id === 'metalcore') assert.ok(fingerCount(c.frets) <= 3, `${c.name}: easy to hold, three fingers at most`);
       }
       assert.ok(RULES[id].check(p), `${id} progression ${p.chords.map((c) => c.name).join(' ')} ${RULES[id].why}`);
       previous = p;
@@ -140,7 +138,7 @@ test('the example progressions from the plan come out as promised', () => {
   assert.deepEqual(names('metalcore', 'one-four-five-six', 'B', 'minor'), ['Bm7', 'E', 'F#m7', 'G']);
 });
 
-test('metalcore is mostly in B minor, and its home chord mostly rings on the open low strings', () => {
+test('metalcore is mostly in B minor, and its home chord is an open chord', () => {
   const rng = seededRandom(9);
   let inB = 0;
   let homes = 0;
@@ -153,10 +151,9 @@ test('metalcore is mostly in B minor, and its home chord mostly rings on the ope
     if (!home) continue;
     homes++;
     if (home.frets[0] === 0) open++;
-    else assert.equal(home.frets[1], 5, 'or the A shape at fret 5');
   }
-  assert.ok(inB > 120 && inB < 180, `${inB} of 300 in B minor`);
-  assert.ok(open > 0.8 * homes, `${open} of ${homes} on the open strings`);
+  assert.ok(inB > 170 && inB < 230, `${inB} of 300 in B minor`);
+  assert.equal(open, homes, 'open, like the open E minor shape');
 });
 
 test('metalcore plays the chorus of the user\'s example and the progressions of metalcore songs', () => {

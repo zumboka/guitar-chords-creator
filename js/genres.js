@@ -205,15 +205,15 @@ export const GENRES = {
 
   metalcore: {
     name: 'Metalcore',
-    blurb: 'Two high-gain guitars in Drop B: emotional minor-key choruses as full chords, ringing on every beat.',
+    blurb: 'Two high-gain guitars in B standard: emotional minor-key choruses as full, open chords, ringing on every beat.',
     tempo: 184,
     swing: 0,
-    // Every string three semitones lower and the low one five, with the open chords of B on the low strings.
-    tuning: 'dropB',
+    // Standard tuning a fourth lower: the chord shapes every guitarist knows, down to a low B.
+    tuning: 'bStandard',
     keys: {
       major: [],
-      // Mostly B minor, the key of the open low string and of the user's example.
-      minor: ['B', 'B', 'B', 'C#', 'E', 'F#'],
+      // B minor, the key of the user's example, and E minor: there most chords are open shapes.
+      minor: ['B', 'B', 'E'],
     },
     // Full minor and major chords, as in the chorus of Jared Dines' "Metalcore VS Deathcore" (the
     // user's example: i7-IV-v7-VI, then iv-III-v-VI) and in metalcore songs (docs/spec.md).
@@ -227,8 +227,8 @@ export const GENRES = {
       { id: 'one-seven-six-five', mode: 'minor', chords: ['i:m', 'bVII:maj', 'bVI:maj', 'V:maj'] },
       { id: 'phrygian', mode: 'minor', chords: ['i:m', 'bII:maj', 'bVII:maj', 'bVI:maj'] },
     ],
-    // Low on the neck, the root on the low string where it fits, the open chords of B and F#.
-    voicing: { center: 4, centerWeight: 0.1, open: -0.3, move: 0.08, bassString: 0, bassPenalty: 0.5 },
+    // Easy to hold: open shapes first, low on the neck, the root on one of the two lowest strings.
+    voicing: { center: 2, centerWeight: 0.15, open: -0.4, move: 0.08, maxBassString: 1 },
     // Whole chords left to ring, struck again on every beat in downstrokes.
     strum: { spread: 0.003, pattern: riff('X---X---X---X---') },
     // Up through every note of the chord and back down in eighths, each left to ring into the next
