@@ -54,7 +54,7 @@ test('Metalcore images name the Drop C tuning and the strings under each diagram
   const { svg } = chordSheet(p, '#b91c1c');
   assertWellFormed(svg);
   assert.deepEqual(texts(svg, 'tuning'), ['Drop C tuning: C G C F A D']);
-  assert.deepEqual(texts(svg, 'name'), ['A♭5', 'B♭5', 'C5', 'E♭5']);
+  assert.deepEqual(texts(svg, 'name'), ['A♭', 'B♭', 'Cm', 'E♭']);
   assert.equal(count(svg, 'tuning-note retuned'), 4, 'the low C highlighted in every diagram');
 });
 

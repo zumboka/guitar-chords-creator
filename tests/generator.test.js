@@ -36,9 +36,9 @@ const RULES = {
     why: 'borrows at least one chord from outside the key',
   },
   metalcore: {
-    qualities: ['5'],
-    check: (p) => p.key.mode === 'minor',
-    why: 'is in a minor key',
+    qualities: ['m', 'maj', 'm7'],
+    check: (p) => p.key.mode === 'minor' && p.chords.every((c) => c.frets.filter((f) => f != null).length >= 5),
+    why: 'is in a minor key and plays full chords of five or six strings',
   },
 };
 
@@ -89,10 +89,10 @@ for (const id of GENRE_IDS) {
         assert.match(c.root, /^[A-G][#b]?$/, `${c.name} has a plain root name`);
         assert.ok(!['Cb', 'Fb', 'E#', 'B#'].includes(c.root), `${c.name} uses the common enharmonic name`);
         if (id === 'punk' || id === 'metalcore') {
-          assert.ok(c.frets[0] != null || c.frets[1] != null, `${c.name} power chord sits on the low strings`);
+          assert.ok(c.frets[0] != null || c.frets[1] != null, `${c.name} has its root on the low strings`);
         }
         if (id === 'metalcore' && c.frets[0] != null) {
-          assert.ok(c.frets[1] === c.frets[0] && c.frets[2] === c.frets[0], `${c.name}: one-finger Drop C shape`);
+          assert.ok(c.frets[1] === c.frets[0] && c.frets[2] === c.frets[0], `${c.name}: root, fifth and octave under one finger`);
         }
       }
       assert.ok(RULES[id].check(p), `${id} progression ${p.chords.map((c) => c.name).join(' ')} ${RULES[id].why}`);
@@ -137,33 +137,39 @@ test('the example progressions from the plan come out as promised', () => {
   assert.deepEqual(names('punk', 'axis', 'E', 'major'), ['E5', 'B5', 'C#5', 'A5']);
   assert.deepEqual(names('post-rock', 'open-four', 'G', 'major'), ['Gmaj7', 'Em(add9)', 'Cadd9', 'Dsus4']);
   assert.deepEqual(names('shoegaze', 'drone-mixture', 'E', 'major'), ['Emaj7', 'Cmaj7', 'Aadd9', 'Am(add9)']);
-  assert.deepEqual(names('metalcore', 'six-seven-one-three', 'C', 'minor'), ['Ab5', 'Bb5', 'C5', 'Eb5']);
+  assert.deepEqual(names('metalcore', 'one-four-five-six', 'C', 'minor'), ['Cm7', 'F', 'Gm7', 'Ab']);
 });
 
 test('metalcore is mostly in C minor, and its home chord mostly rings on the open low strings', () => {
   const rng = seededRandom(9);
   let inC = 0;
+  let homes = 0;
   let open = 0;
   for (let i = 0; i < 300; i++) {
     const p = generateProgression('metalcore', rng);
     if (p.key.tonic !== 'C') continue;
     inC++;
-    const home = p.chords.find((c) => c.roman === 'i5');
+    const home = p.chords.find((c) => c.root === 'C');
+    if (!home) continue;
+    homes++;
     if (home.frets[0] === 0) open++;
-    else assert.deepEqual(home.frets, [12, 12, 12, null, null, null], 'or an octave up');
+    else assert.equal(home.frets[1], 5, 'or the A shape at fret 5');
   }
   assert.ok(inC > 120 && inC < 180, `${inC} of 300 in C minor`);
-  assert.ok(open > 0.8 * inC, `${open} of ${inC} on the open strings`);
+  assert.ok(open > 0.8 * homes, `${open} of ${homes} on the open strings`);
 });
 
-test('metalcore plays the progressions of metalcore choruses and riffs', () => {
+test('metalcore plays the chorus of the user\'s example and the progressions of metalcore songs', () => {
   const names = (template) => buildProgression('metalcore', template, { tonic: 'C', mode: 'minor' }).chords.map((c) => c.name);
+  // Jared Dines, "Metalcore VS Deathcore", 1:47 to 2:04 (Bm7-E-F#m7-G, then Em-D-F#m-G in B minor).
+  assert.deepEqual(names('one-four-five-six'), ['Cm7', 'F', 'Gm7', 'Ab']);
+  assert.deepEqual(names('four-three-five-six'), ['Fm', 'Eb', 'Gm', 'Ab']);
   // Killswitch Engage, Bring Me The Horizon, Demon Hunter: VI-VII-i-III.
-  assert.deepEqual(names('six-seven-one-three'), ['Ab5', 'Bb5', 'C5', 'Eb5']);
+  assert.deepEqual(names('six-seven-one-three'), ['Ab', 'Bb', 'Cm', 'Eb']);
   // Parkway Drive: i-v-VI-VII.
-  assert.deepEqual(names('one-five-six-seven'), ['C5', 'G5', 'Ab5', 'Bb5']);
+  assert.deepEqual(names('one-five-six-seven'), ['Cm', 'Gm', 'Ab', 'Bb']);
   // Phrygian: the half-step above the open string.
-  assert.deepEqual(names('phrygian'), ['C5', 'Db5', 'Bb5', 'Ab5']);
+  assert.deepEqual(names('phrygian'), ['Cm', 'Db', 'Bb', 'Ab']);
   const shared = GENRES.metalcore.templates.filter((t) =>
     GENRES.punk.templates.some((p) => p.chords.join() === t.chords.join()),
   );

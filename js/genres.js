@@ -13,15 +13,15 @@ const eighths = (vel = 1, off = 0.8) =>
   [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((at) => ({ at, dir: 'down', len: 0.46, vel: at % 1 ? off : vel }));
 
 /**
- * A bar of sixteenths: X = the whole chord, m = palm-muted chug, - = keep ringing. Every stroke
- * rings until the next one, so there are no gaps.
+ * A bar of sixteenths: X = the whole chord, - = keep ringing. Every stroke rings until the next
+ * one, so there are no gaps.
  */
 const riff = (steps) =>
   [...steps].flatMap((step, i) => {
     if (step === '-') return [];
     const next = [...steps].findIndex((s, k) => k > i && s !== '-');
     const len = ((next < 0 ? steps.length : next) - i) / 4;
-    return [{ at: i / 4, dir: 'down', len, vel: step === 'X' ? 1 : 0.9, mute: step === 'm' }];
+    return [{ at: i / 4, dir: 'down', len, vel: 1 }];
   });
 
 export const GENRES = {
@@ -205,31 +205,34 @@ export const GENRES = {
 
   metalcore: {
     name: 'Metalcore',
-    blurb: 'Two high-gain guitars in Drop C: anthemic minor progressions, palm-muted chugs and ringing accents.',
-    tempo: 140,
+    blurb: 'Two high-gain guitars in Drop C: emotional minor-key choruses as full chords, ringing on every beat.',
+    tempo: 184,
     swing: 0,
-    // Every string a tone lower and the low one two: one-finger power chords and an open low C.
+    // Every string a tone lower and the low one two, with the open chords of C on the low strings.
     tuning: 'dropC',
     keys: {
       major: [],
       // Mostly C minor, the key of the open low string.
       minor: ['C', 'C', 'C', 'D', 'F', 'G'],
     },
-    // As in metalcore songs (docs/spec.md): the VI-VII-i of the choruses, the minor v, Phrygian half-steps.
+    // Full minor and major chords, as in the chorus of Jared Dines' "Metalcore VS Deathcore" (the
+    // user's example: i7-IV-v7-VI, then iv-III-v-VI) and in metalcore songs (docs/spec.md).
     templates: [
-      { id: 'six-seven-one-three', mode: 'minor', chords: ['bVI:5', 'bVII:5', 'i:5', 'bIII:5'] },
-      { id: 'one-five-six-seven', mode: 'minor', chords: ['i:5', 'v:5', 'bVI:5', 'bVII:5'] },
-      { id: 'one-six-three-five', mode: 'minor', chords: ['i:5', 'bVI:5', 'bIII:5', 'v:5'] },
-      { id: 'six-four-one-three', mode: 'minor', chords: ['bVI:5', 'iv:5', 'i:5', 'bIII:5'] },
-      { id: 'one-seven-six-five', mode: 'minor', chords: ['i:5', 'bVII:5', 'bVI:5', 'V:5'] },
-      { id: 'phrygian', mode: 'minor', chords: ['i:5', 'bII:5', 'bVII:5', 'bVI:5'] },
+      { id: 'one-four-five-six', mode: 'minor', chords: ['i:m7', 'IV:maj', 'v:m7', 'bVI:maj'] },
+      { id: 'four-three-five-six', mode: 'minor', chords: ['iv:m', 'bIII:maj', 'v:m', 'bVI:maj'] },
+      { id: 'six-seven-one-three', mode: 'minor', chords: ['bVI:maj', 'bVII:maj', 'i:m', 'bIII:maj'] },
+      { id: 'one-five-six-seven', mode: 'minor', chords: ['i:m', 'v:m', 'bVI:maj', 'bVII:maj'] },
+      { id: 'one-six-three-five', mode: 'minor', chords: ['i:m', 'bVI:maj', 'bIII:maj', 'v:m'] },
+      { id: 'six-four-one-three', mode: 'minor', chords: ['bVI:maj', 'iv:m', 'i:m', 'bIII:maj'] },
+      { id: 'one-seven-six-five', mode: 'minor', chords: ['i:m', 'bVII:maj', 'bVI:maj', 'V:maj'] },
+      { id: 'phrygian', mode: 'minor', chords: ['i:m', 'bII:maj', 'bVII:maj', 'bVI:maj'] },
     ],
-    // One-finger shapes anywhere on the neck, C5 on the open strings.
-    voicing: { center: 5, centerWeight: 0.05, open: -0.3, move: 0.05 },
-    // Chugs in groups of four, three and two, each opened by a ringing accent, as in Killswitch Engage's
-    // verse riffs; the last bar rings in eighths like a chorus and chugs its way back to the first.
-    strum: { spread: 0, pattern: riff('Xmmm--Xmm--Xm-X-'), fill: riff('X-X-X-X-X-X-mmmm') },
-    arpeggio: { step: 0.25, sequence: [0, 2, 5, 0, 2, 5, 0, 2, 5, 0, 2, 5, 0, 2, 5, 2], ring: 0.25, vel: 0.9, mutes: [0] },
+    // Low on the neck, the root on the low string where it fits, the open chords of C.
+    voicing: { center: 4, centerWeight: 0.1, open: -0.3, move: 0.08, bassString: 0, bassPenalty: 0.5 },
+    // Whole chords left to ring, struck again on every beat in downstrokes.
+    strum: { spread: 0.003, pattern: riff('X---X---X---X---') },
+    // Low, middle and top in groups of three, three and two, the low note palm-muted.
+    arpeggio: { step: 0.5, sequence: [0, 2, 5, 0, 2, 5, 0, 2], ring: 0.5, vel: 0.9, mutes: [0] },
   },
 };
 

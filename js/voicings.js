@@ -126,13 +126,30 @@ const OPEN = [
 ].map(toShape);
 
 // Drop C, for Metalcore: every string a tone lower than in standard tuning, the low one two tones.
-// Power chords take one finger across the three lowest strings, or none for C5.
+// Full chords as metalcore guitarists play them: root, fifth and octave under one finger across the
+// three lowest strings with the rest of the chord on top, or the A shape of standard tuning on the
+// second string.
+const DROP_C = [
+  ['maj', 'D', [2, 2, 2, 4, 5, 4]],
+  ['m', 'D', [2, 2, 2, 4, 5, 3]],
+  ['7', 'D', [2, 2, 2, 4, 3, 4]],
+  ['m7', 'D', [2, 2, 2, 4, 3, 3]],
+  ['maj', 'A', [x, 2, 4, 4, 4, 2]],
+  ['m', 'A', [x, 2, 4, 4, 3, 2]],
+  ['7', 'A', [x, 2, 4, 2, 4, 2]],
+  ['m7', 'A', [x, 2, 4, 2, 3, 2]],
+].map(toShape);
+
+/** The same shape two frets lower: on the open strings, the chords of C and G. */
+const lower = (shape) => ({
+  ...shape,
+  rootPc: mod(shape.rootPc - 2, 12),
+  frets: shape.frets.map((f) => (f == null ? f : f - 2)),
+});
+
 export const SHAPES = {
   standard: { movable: MOVABLE, open: OPEN },
-  dropC: {
-    movable: [toShape(['5', 'D', [2, 2, 2, x, x, x]])],
-    open: [toShape(['5', 'C', [0, 0, 0, x, x, x]])],
-  },
+  dropC: { movable: DROP_C, open: DROP_C.map(lower) },
 };
 
 const MAX_FRET = 14;

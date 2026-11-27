@@ -29,17 +29,14 @@ Files are named by MIDI note number (36 = low C in Drop C, 40 = low E, 78 = F♯
 
 **Changes:** files renamed from note names (`E2.mp3`) to MIDI numbers (`40.mp3`); the audio itself is unchanged.
 
-## Guitars recorded without an amp, for Metalcore (CC0)
+## A guitar recorded without an amp, for Metalcore (CC0)
 
 | Folder | Content |
 |---|---|
-| `power_chord_a`, `power_chord_b` | two performances of each ringing power chord (root, fifth, octave), by root: 40 (E) to 51 (D♯) |
-| `palm_mute_a`, `palm_mute_b` | the same chords palm-muted |
-| `power_chord_c`, `palm_mute_c` | the power chords below, ringing and palm-muted, played on a seven-string guitar: 35 (B) to 39 (D♯), for Drop C's low C to E♭ |
-| `di_guitar` | single notes, 36 to 63 |
+| `di_guitar` | single notes of a seven-string guitar, 36 (low C) to 76 (fret 14 on Drop C's top string); the full chords are built from them |
 
-**Source:** recorded by Carbonthief and published in the [Renoise instrument library](https://files.renoise.com/forum/downloads/Instruments/): `power_chord_a`, `power_chord_b`, `palm_mute_a` and `palm_mute_b` from [Power Chords Std DI](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Power_Chords_Std_DI/), the rest from [Seven String Guitar](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Seven_String_Guitar/).
+**Source:** recorded by Carbonthief and published in the [Renoise instrument library](https://files.renoise.com/forum/downloads/Instruments/) as [Seven String Guitar](https://files.renoise.com/forum/downloads/Instruments/Carbonthief-Seven_String_Guitar/).
 
-**License:** CC0, public domain (stated on both pages and in their `LICENSE.txt`). Credit isn't required; thank you anyway.
+**License:** CC0, public domain (stated on the page and in its `LICENSE.txt`). Credit isn't required; thank you anyway.
 
-**Changes:** cut to start 6 ms before the pick attack and to 5 s (chords), 1 s (palm mutes) or 1.8 s (single notes), faded out, set to a common peak level, and saved as 22.05 kHz, 16-bit mono FLAC.
+**Changes:** cut to start 6 ms before the pick attack and to 2.6 s, faded out over the last 0.3 s, set to a common peak level, and saved as 22.05 kHz, 16-bit mono FLAC.

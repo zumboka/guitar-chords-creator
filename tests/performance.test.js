@@ -2,11 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { generateProgression } from '../js/generator.js';
-import { buildPerformance, previewNotes, strokesOf } from '../js/performance.js';
+import { buildPerformance, previewNotes } from '../js/performance.js';
 import { TUNINGS, chordTones, mod } from '../js/theory.js';
 import { seededRandom } from '../js/dsp.js';
 
 const EPS = 1e-9;
+
+/** The notes hit together, as one stroke led by its first note. */
+const strokesOf = (notes) =>
+  [...Map.groupBy(notes, (n) => n.stroke).values()].map((hit) => ({
+    first: hit.reduce((a, b) => (b.time < a.time ? b : a)),
+    strings: hit.map((n) => n.string).sort((a, b) => a - b),
+    muted: hit.some((n) => n.muted),
+    chord: hit[0].chord,
+  }));
 
 for (const id of GENRE_IDS) {
   for (const mode of ['strum', 'arpeggio']) {
@@ -54,20 +63,20 @@ for (const id of GENRE_IDS) {
   }
 }
 
-test('metalcore strums whole power chords: ringing accents and palm-muted chugs', () => {
+test('metalcore strums whole chords on every beat and lets them ring', () => {
   const rng = seededRandom(21);
+  const bpm = GENRES.metalcore.tempo;
   for (let run = 0; run < 30; run++) {
     const p = generateProgression('metalcore', rng);
-    const strokes = strokesOf(buildPerformance(p, { mode: 'strum', bpm: 140 }).notes);
+    const strokes = strokesOf(buildPerformance(p, { mode: 'strum', bpm }).notes);
     for (let i = 0; i < 4; i++) {
       const bar = strokes.filter((s) => s.chord === i);
-      assert.ok(!bar[0].muted, 'each chord starts ringing');
-      assert.ok(bar.some((s) => s.muted) && bar.filter((s) => !s.muted).length >= 3);
+      const beats = bar.map((s) => (s.first.time - (i * 240) / bpm) / (60 / bpm));
+      assert.ok(beats.every((b, k) => Math.abs(b - k) < 1e-9) && beats.length === 4, `beats ${beats}`);
+      const strings = p.chords[i].frets.flatMap((f, s) => (f == null ? [] : [s]));
       for (const s of bar) {
-        assert.deepEqual(
-          s.midis.map((m) => m - s.midis[0]),
-          [0, 7, 12],
-        );
+        assert.ok(!s.muted, 'ringing, not palm-muted');
+        assert.deepEqual(s.strings, strings);
       }
     }
   }
@@ -80,9 +89,9 @@ test('metalcore never stops: every stroke lasts until the next, over chord chang
       const bpm = 50 + Math.floor(rng() * 170);
       const perf = buildPerformance(generateProgression('metalcore', rng), { mode, bpm });
       const strokes = strokesOf(perf.notes);
-      strokes.forEach((s, k) => {
-        const next = k + 1 < strokes.length ? strokes[k + 1].time : perf.duration;
-        assert.ok(Math.abs(s.time + s.duration - next) < 1e-6, `${mode} stroke ${k} ends at the next one`);
+      strokes.forEach(({ first }, k) => {
+        const next = k + 1 < strokes.length ? strokes[k + 1].first.time : perf.duration;
+        assert.ok(Math.abs(first.time + first.duration - next) < 1e-6, `${mode} stroke ${k} rings until the next one`);
       });
     }
   }
@@ -90,12 +99,12 @@ test('metalcore never stops: every stroke lasts until the next, over chord chang
 
 test('the metalcore arpeggio picks single notes over a palm-muted root', () => {
   const p = generateProgression('metalcore', seededRandom(23));
-  const strokes = strokesOf(buildPerformance(p, { mode: 'arpeggio', bpm: 140 }).notes);
-  for (const s of strokes) {
-    assert.equal(s.midis.length, 1);
+  const { notes } = buildPerformance(p, { mode: 'arpeggio', bpm: GENRES.metalcore.tempo });
+  assert.equal(new Set(notes.map((n) => n.stroke)).size, notes.length, 'one note at a time');
+  for (const n of notes) {
     const open = TUNINGS.dropC.notes;
-    const root = Math.min(...p.chords[s.chord].frets.flatMap((f, k) => (f == null ? [] : [open[k] + f])));
-    assert.equal(s.muted, s.midis[0] === root);
+    const root = Math.min(...p.chords[n.chord].frets.flatMap((f, k) => (f == null ? [] : [open[k] + f])));
+    assert.equal(n.muted, n.midi === root);
   }
 });
 
@@ -193,18 +202,6 @@ test('post rock: the arpeggio rings into chords faded in by the second guitar, a
     assert.equal(picked.length, 8);
     assert.ok(picked.every((n) => n.swell === 0));
   });
-});
-
-test('strokes group the notes hit together, lowest first', () => {
-  const p = generateProgression('neo-soul', seededRandom(24));
-  const { notes } = buildPerformance(p, { mode: 'strum', bpm: 80 });
-  const strokes = strokesOf(notes);
-  assert.equal(strokes.length, 4 * GENRES['neo-soul'].strum.pattern.length);
-  assert.equal(
-    strokes.reduce((sum, s) => sum + s.midis.length, 0),
-    notes.length,
-  );
-  for (const s of strokes) assert.deepEqual(s.midis, s.midis.slice().sort((x, y) => x - y));
 });
 
 test('clicking a diagram strums each of its strings once, low to high', () => {

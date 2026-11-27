@@ -1,6 +1,6 @@
-// The recorded instruments in audio/. One file per note, or per root for the power chords, from
-// MIDI note `low` upwards. `cents` says how far each recording is from true pitch (positive =
-// sharp), measured in the sustain; playback divides it out.
+// The recorded instruments in audio/. One file per note, from MIDI note `low` upwards. `cents`
+// says how far each recording is from true pitch (positive = sharp), measured in the sustain;
+// playback divides it out.
 
 export const RECORDINGS = {
   // A Stratocaster without an amp (amp.js adds it): the neck pickup in mid-neck positions, and the
@@ -47,30 +47,18 @@ export const RECORDINGS = {
       5, 5, 9, 9, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 5, 5, 5, 5, 5, 6,
     ],
   },
-  // Also recorded without an amp, for Metalcore. Two performances, a and b, of each
-  // power chord (root, fifth and octave), ringing and palm-muted, on the roots 40 (E) to 51 (D#),
-  // and c, from a seven-string guitar, on the roots below: 35 (B) to 39 (D#).
-  power_chord_a: { type: 'flac', low: 40, cents: [-3, -6, -4, -5, -6, -2, -3, -2, -2, -2, -3, -1] },
-  power_chord_b: { type: 'flac', low: 40, cents: [-4, -7, -2, -3, -5, -3, -1, -2, -2, -2, -4, -2] },
-  power_chord_c: { type: 'flac', low: 35, cents: [-5, -4, -4, -9, -2] },
-  palm_mute_a: { type: 'flac', low: 40, cents: [-5, -5, -4, -7, -6, -2, -3, -6, -3, -4, -2, 1] },
-  palm_mute_b: { type: 'flac', low: 40, cents: [-3, -5, -3, -8, -3, -1, -4, -4, -4, -2, -2, 0] },
-  palm_mute_c: { type: 'flac', low: 35, cents: [2, -2, -3, -3, -4] },
-  // Single notes, 36 (low C) to 63.
+  // Also recorded without an amp, for Metalcore: single notes of a seven-string guitar, 36 (low C)
+  // to 76 (fret 14 on Drop C's top string).
   di_guitar: {
     type: 'flac',
     low: 36,
     cents: [
-      -9, -2, -5, -8, -6, 7, 8, 4, 3, 3, 6, 5, 1, -2,
-      -2, 6, 5, 8, 8, 7, 5, 5, 3, 2, -3, -1, -2, -3,
+      -9, -2, -5, -8, -6, 7, 8, 4, 3, 3, 6, 5, 1, -2, -2, 6, 5, 8, 8, 7, 5,
+      5, 3, 2, -3, -1, -2, -3, -3, -3, -4, -5, -5, -6, -7, -7, -4, -7, -6, -5, -6,
     ],
   },
 };
 
 export const highest = (instrument) => RECORDINGS[instrument].low + RECORDINGS[instrument].cents.length - 1;
-
-/** The recorded note closest to `midi`. */
-export const nearest = (instrument, midi) =>
-  Math.min(highest(instrument), Math.max(RECORDINGS[instrument].low, midi));
 
 export const centsOf = (instrument, midi) => RECORDINGS[instrument].cents[midi - RECORDINGS[instrument].low];

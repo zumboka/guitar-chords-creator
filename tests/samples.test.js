@@ -4,10 +4,10 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { generateProgression } from '../js/generator.js';
-import { buildPerformance, previewNotes, strokesOf } from '../js/performance.js';
+import { buildPerformance, previewNotes } from '../js/performance.js';
 import { SampleBank, notesOf, sampleUrl } from '../js/samples.js';
 import { SOUNDS, recordingsNeeded, soundFor, takesOf, voicesFor } from '../js/sounds.js';
-import { RECORDINGS, centsOf, highest, nearest } from '../js/recordings.js';
+import { RECORDINGS, centsOf, highest } from '../js/recordings.js';
 import { SHAPES, voicingsFor } from '../js/voicings.js';
 import { QUALITIES } from '../js/theory.js';
 import { seededRandom } from '../js/dsp.js';
@@ -30,9 +30,7 @@ test('every genre has a sound made of recorded instruments', () => {
   for (const id of GENRE_IDS) {
     for (const mode of MODES) {
       const sound = soundFor(id, mode);
-      const used = takesOf(sound).map((t) => t.instrument);
-      if (sound.chords) used.push(...sound.chords.ringing, ...sound.chords.muted);
-      for (const instrument of used) assert.ok(RECORDINGS[instrument], instrument);
+      for (const { instrument } of takesOf(sound)) assert.ok(RECORDINGS[instrument], instrument);
     }
   }
 });
@@ -109,14 +107,11 @@ test('the tuning corrections are small', () => {
   }
   assert.equal(centsOf('strat_neck', 40), 9);
   assert.equal(centsOf('strat_bridge', 78), 5);
-  assert.equal(nearest('power_chord_a', 38), 40);
-  assert.equal(nearest('power_chord_a', 45), 45);
-  assert.equal(nearest('power_chord_a', 60), 51);
+  assert.equal(centsOf('di_guitar', 76), -6);
 });
 
-test('every note any chord shape can play has a recording in the note-by-note sounds', () => {
+test('every note any chord shape can play has a recording', () => {
   for (const id of GENRE_IDS) {
-    if (SOUNDS[id].chords) continue;
     const { tuning } = GENRES[id];
     for (const mode of MODES) {
       for (const [instrument, notes] of recordingsNeeded(id, mode, allShapes(tuning), tuning)) {
@@ -126,24 +121,16 @@ test('every note any chord shape can play has a recording in the note-by-note so
   }
 });
 
-test('metalcore: every power chord shape plays from existing recordings, moved by a few semitones at most', () => {
-  const sound = SOUNDS.metalcore;
-  const { tuning } = GENRES.metalcore;
-  for (const frets of allShapes(tuning, ['5'])) {
-    for (const mode of MODES) {
-      for (const [instrument, notes] of recordingsNeeded('metalcore', mode, [frets], tuning)) {
-        for (const midi of notes) assert.ok(existsSync(path(sampleUrl(instrument, midi))), `${instrument} ${midi}`);
-      }
-    }
-  }
+test('metalcore plays every note from its own recording or its neighbour\'s, moved a semitone at most', () => {
   const rng = seededRandom(31);
   for (let run = 0; run < 200; run++) {
-    for (const mode of ['strum', 'arpeggio']) {
-      const { notes } = buildPerformance(generateProgression('metalcore', rng), { mode, bpm: 140 });
-      strokesOf(notes).forEach((stroke, k) => {
-        for (const { rate } of voicesFor(sound, stroke, k)) {
-          const semitones = 12 * Math.log2(rate);
-          assert.ok(Math.abs(semitones) < 3.01, `moved by ${semitones}`);
+    for (const mode of MODES) {
+      const { notes } = buildPerformance(generateProgression('metalcore', rng), { mode, bpm: 184 });
+      notes.forEach((note, k) => {
+        for (const voice of voicesFor(SOUNDS.metalcore, note, k)) {
+          assert.equal(voice.instrument, 'di_guitar');
+          assert.ok(Math.abs(voice.midi - note.midi) <= 1);
+          assert.ok(Math.abs(voice.rate - 2 ** ((note.midi - voice.midi) / 12)) < 1e-9);
         }
       });
     }
@@ -170,13 +157,9 @@ test('what is loaded for a playback is what it plays', () => {
       const sound = soundFor(id, mode);
       const needed = recordingsNeeded(id, mode, frets, GENRES[id].tuning);
       const { notes } = buildPerformance(p, { mode, bpm: 100 });
-      const preview = previewNotes(frets[0], id);
-      const strokes = sound.chords ? strokesOf(notes) : notes.map((n) => ({ ...n, midis: [n.midi] }));
-      if (mode === 'strum') {
-        strokes.push(...(sound.chords ? strokesOf(preview) : preview.map((n) => ({ ...n, midis: [n.midi] }))));
-      }
-      strokes.forEach((stroke, k) => {
-        for (const voice of voicesFor(sound, stroke, k)) {
+      if (mode === 'strum') notes.push(...previewNotes(frets[0], id));
+      notes.forEach((note, k) => {
+        for (const voice of voicesFor(sound, note, k)) {
           assert.ok(needed.get(voice.instrument)?.has(voice.midi), `${id} ${mode}: ${voice.instrument} ${voice.midi}`);
         }
       });
@@ -184,31 +167,16 @@ test('what is loaded for a playback is what it plays', () => {
   }
 });
 
-test('the two metalcore guitars never play the same recording, and repeated strokes vary', () => {
-  const sound = SOUNDS.metalcore;
+test('the two metalcore guitars never play the same recording, and a repeated note varies', () => {
   const key = (v) => `${v.instrument}/${v.midi}`;
-  for (const stroke of [
-    { midis: [36, 43, 48], muted: true },
-    { midis: [36, 43, 48], muted: false },
-    { midis: [39, 46, 51], muted: true },
-    { midis: [39, 46, 51], muted: false },
-    { midis: [40, 47, 52], muted: true },
-    { midis: [50, 57, 62], muted: true },
-    { midis: [45, 52, 57], muted: false },
-    { midis: [36], muted: true },
-    { midis: [62], muted: false },
-  ]) {
+  for (const midi of [36, 43, 48, 55, 62, 75, 76]) {
     for (let k = 0; k < 8; k++) {
-      const [left, right] = voicesFor(sound, stroke, k);
+      const [left, right] = voicesFor(SOUNDS.metalcore, { midi }, k);
       assert.notEqual(key(left), key(right));
-      const [nextLeft, nextRight] = voicesFor(sound, stroke, k + 1);
+      const [nextLeft, nextRight] = voicesFor(SOUNDS.metalcore, { midi }, k + 1);
       assert.notEqual(key(left), key(nextLeft));
       assert.notEqual(key(right), key(nextRight));
     }
-  }
-  for (const root of [36, 38, 41]) {
-    const chug = [0, 1, 2, 3].map((k) => key(voicesFor(sound, { midis: [root, root + 7, root + 12], muted: true }, k)[0]));
-    assert.equal(new Set(chug).size, 4, 'four different chugs before one comes back');
   }
 });
 

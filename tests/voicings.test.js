@@ -49,12 +49,20 @@ test('every quality the genres use has shapes for all twelve roots, in the tunin
   }
 });
 
-test('Drop C: the open low strings are a C5, and power chords take one finger', () => {
-  assert.ok(matchesChord([0, 0, 0, x, x, x], 0, '5', 'dropC'));
-  assert.ok(!matchesChord([0, 0, 0, x, x, x], 0, '5'), 'not in standard tuning');
-  assert.deepEqual(voicingsFor(2, '5', 'dropC').map(fretsToString), ['222xxx', 'eeexxx'], 'D5 at fret 2 or 14');
-  assert.deepEqual(voicingsFor(0, '5', 'dropC').map(fretsToString), ['000xxx', 'cccxxx'], 'C5 open or at fret 12');
-  assert.deepEqual(voicingsFor(10, '5', 'dropC').map(fretsToString), ['aaaxxx'], 'Bb5 at fret 10');
+test('Drop C: full chords on root, fifth and octave under one finger, or the A shape', () => {
+  assert.ok(matchesChord([0, 0, 0, 2, 3, 1], 0, 'm', 'dropC'), 'Cm on the open low strings');
+  assert.ok(!matchesChord([0, 0, 0, 2, 3, 1], 0, 'm'), 'not in standard tuning');
+  assert.deepEqual(voicingsFor(0, 'm', 'dropC').map(fretsToString), ['000231', 'x57765'], 'Cm open or at fret 5');
+  assert.deepEqual(voicingsFor(8, 'maj', 'dropC').map(fretsToString), ['888aba', 'x13331'], 'Ab at fret 8 or 1');
+  assert.deepEqual(voicingsFor(7, 'm7', 'dropC').map(fretsToString), ['x02010', '777988', 'xcecdc'], 'Gm7 open, at fret 7 or 12');
+  for (const quality of ['maj', 'm', '7', 'm7']) {
+    for (let root = 0; root < 12; root++) {
+      for (const frets of voicingsFor(root, quality, 'dropC')) {
+        const [low, fifth, octave] = frets;
+        assert.ok(low == null ? frets[1] != null : fifth === low && octave === low, `${fretsToString(frets)}`);
+      }
+    }
+  }
 });
 
 test('the chord check rejects wrong notes, missing tones and a wrong bass', () => {

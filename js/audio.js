@@ -6,7 +6,7 @@ import { recordingsNeeded, soundFor, takesOf, voicesFor } from './sounds.js';
 import { createAmp } from './amp.js';
 import { impulseResponse, seededRandom, vinylNoise } from './dsp.js';
 import { filter, gain, series } from './nodes.js';
-import { buildPerformance, previewNotes, strokesOf } from './performance.js';
+import { buildPerformance, previewNotes } from './performance.js';
 import { SampleBank } from './samples.js';
 
 const NOTE_LEVEL = 0.5;
@@ -214,37 +214,35 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
   const sources = [];
   const takes = takesOf(sound);
   const release = sound.release ?? RELEASE;
-  const strokes = sound.chords ? strokesOf(notes) : notes.map((n) => ({ ...n, midis: [n.midi] }));
   const counts = new Map();
   const stray = (amount) => (humanize ? (Math.random() - 0.5) * amount : 0);
 
-  for (const stroke of strokes) {
+  for (const note of notes) {
     const jitter = stray(JITTER);
     const loudness = 1 + stray(0.16);
-    const level = stroke.velocity * loudness;
-    const kind = `${stroke.midis.length} ${stroke.muted}`;
-    const count = counts.get(kind) || 0;
-    counts.set(kind, count + 1);
+    const level = note.velocity * loudness;
+    const count = counts.get(note.midi) || 0;
+    counts.set(note.midi, count + 1);
 
-    voicesFor(sound, stroke, count).forEach((voice, t) => {
-      if (stroke.part != null && stroke.part !== t) return;
+    voicesFor(sound, note, count).forEach((voice, t) => {
+      if (note.part != null && note.part !== t) return;
       const sample = bank.get(voice.instrument, voice.midi);
       // An amp levels everything out; without one, many notes at once need headroom.
       const headroom = takes[t].amp ? 1 : NOTE_LEVEL * (takes.length > 1 ? 0.75 : 1);
       // Separate performances stray separately; copies of one recording must stay together.
       const late = takes[t].offset + (sound.tight ? stray(TIGHT_JITTER) : jitter);
-      const start = Math.max(ctx.currentTime, startAt + stroke.time + late);
-      const end = start + Math.max(0.02, stroke.duration - (sound.tight ? DAMP : 0));
+      const start = Math.max(ctx.currentTime, startAt + note.time + late);
+      const end = start + Math.max(0.02, note.duration - (sound.tight ? DAMP : 0));
       const source = ctx.createBufferSource();
       source.buffer = sample.buffer;
       source.playbackRate.value = sample.rate * voice.rate;
       const envelope = ctx.createGain();
       const peak = level * headroom * sample.gain;
-      const attack = stroke.swell || ATTACK;
+      const attack = note.swell || ATTACK;
       envelope.gain.setValueAtTime(0, start);
       envelope.gain.linearRampToValueAtTime(peak, start + attack);
       let head = source;
-      if (stroke.dead) {
+      if (note.dead) {
         // A slap: the click of the string and a short thud.
         envelope.gain.setTargetAtTime(0, start + 0.005, 0.009);
         head = series(head, filter(ctx, 'highshelf', 1500, 0, 8));
@@ -253,7 +251,7 @@ function scheduleNotes(ctx, { inputs }, notes, startAt, sound, bank, humanize = 
         if (sound.tight) envelope.gain.linearRampToValueAtTime(0, end + CHOKE);
         else envelope.gain.setTargetAtTime(0, Math.max(end, start + attack), release / 4);
       }
-      if (stroke.muted && !voice.muted) head = series(head, palmMute(ctx, start));
+      if (note.muted) head = series(head, palmMute(ctx, start));
       series(head, envelope, inputs[t]);
       source.start(start, sample.offset);
       source.stop(end + release * 2);

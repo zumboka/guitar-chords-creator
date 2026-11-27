@@ -67,7 +67,7 @@ export function buildPerformance(progression, { mode, bpm }) {
         else {
           strummed(strings, ev).forEach((n, k) => {
             const time = start + at * beat + k * (ev.spread ?? spread);
-            add(n, at, ev.len, ev.vel * (1 - k * 0.03), { time, muted: !!ev.mute });
+            add(n, at, ev.len, ev.vel * (1 - k * 0.03), { time });
           });
         }
         stroke++;
@@ -124,16 +124,3 @@ export function previewNotes(frets, genreId) {
   }));
 }
 
-/**
- * The notes as pick strokes: those of a strum together, picked notes one by one.
- * @returns {{time, duration, midis: number[], velocity, muted, chord}[]} midis lowest first
- */
-export function strokesOf(notes) {
-  const strokes = new Map();
-  for (const { stroke, time, duration, midi, velocity, muted, chord } of notes) {
-    if (!strokes.has(stroke)) strokes.set(stroke, { time, duration, midis: [], velocity, muted, chord });
-    strokes.get(stroke).midis.push(midi);
-  }
-  for (const stroke of strokes.values()) stroke.midis.sort((a, b) => a - b);
-  return [...strokes.values()];
-}

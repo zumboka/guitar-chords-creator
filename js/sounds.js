@@ -1,8 +1,9 @@
 // The guitar of each genre: recorded instruments (see audio/README.md) and their effects.
 //
-// instrument: folder in audio/. chords: recordings of whole power chords, for strums. takes: the
-// guitars, each { pan, offset (s), detune (playback rate), instrument, cabinet, level, amp, sway }; one
-// centred take unless listed. All of them play every note, except notes with a `part` (performance.js).
+// instrument: folder in audio/. takes: the guitars, each { pan, offset (s), detune (playback rate),
+// instrument, cabinet, level, amp, sway }; one centred take unless listed. All of them play every
+// note, except notes with a `part` (performance.js). vary: two takes share one recorded performance,
+// taking turns with each note's recording and its neighbour's, so they never sound the same recording.
 // amp: an amp per take (amp.js), unless the take has its own. sway: vibrato, { rate (Hz), cents }.
 // tight: strings stop dead before the next stroke. release: how slowly they stop otherwise (s).
 // compress: evens out loud and soft. tone: EQ in Hz and dB, peaks as { freq, gain, q }. chorus: copies
@@ -11,8 +12,17 @@
 // gain, calibrated so every genre plays at about -19.5 dBFS RMS (measured with renderOffline in
 // audio.js). strum: what is different when the chords are strummed.
 
-import { highest, nearest } from './recordings.js';
+import { highest } from './recordings.js';
 import { notesOf } from './samples.js';
+
+// High gain for Metalcore, with a mid boost in front that keeps the low strings tight. Hz and dB;
+// drive is the gain into each clipping stage.
+const METAL = {
+  tighten: 90,
+  boost: { freq: 800, gain: 8, q: 0.5 },
+  drive: [38, 14],
+  between: { highpass: 110, lowpass: 7000 },
+};
 
 // Fuzz with scooped mids, for whole chords: little enough gain that their notes stay apart.
 const FUZZ = {
@@ -151,25 +161,18 @@ export const SOUNDS = {
     },
   },
   metalcore: {
-    // Straight from the guitar: whole power chords for the strums, single notes for the arpeggio.
-    // Two performances of each chord, a and b; Drop C's lowest ones from c.
+    // Single notes straight from the guitar; every string of a chord goes into the amp together.
     instrument: 'di_guitar',
-    chords: {
-      ringing: ['power_chord_a', 'power_chord_b', 'power_chord_c'],
-      muted: ['palm_mute_a', 'palm_mute_b', 'palm_mute_c'],
-    },
+    vary: true,
     // Two rhythm guitars, hard left and right, each with its own amp and speaker.
     takes: [
       { pan: -1, cabinet: 1 },
       { pan: 1, cabinet: 2 },
     ],
-    // Hz and dB; drive is the gain into each clipping stage. The cabinet is fitted to the spectrum of
-    // real metal rhythm guitars in Drop C, with the bite of metalcore ones (docs/spec.md).
+    // For picked notes, a cabinet fitted to the spectrum of real metal rhythm guitars in Drop C, with the
+    // bite of metalcore ones (docs/spec.md).
     amp: {
-      tighten: 90,
-      boost: { freq: 800, gain: 8, q: 0.5 },
-      drive: [38, 14],
-      between: { highpass: 110, lowpass: 7000 },
+      ...METAL,
       // prettier-ignore
       cabinet: [
         [50, -11.9], [70, 2.7], [90, 7.2], [115, 5], [140, 0.2], [180, -0.2], [225, -0.1], [280, -0.4],
@@ -181,6 +184,20 @@ export const SOUNDS = {
     tight: true,
     reverb: { mix: 0.04, seconds: 0.7 },
     level: 0.062,
+    strum: {
+      // Whole chords bring far more midrange into the amp. This cabinet takes it back to the balance of
+      // the chorus in the user's example (docs/spec.md): heavy, with the chord clear on top.
+      amp: {
+        ...METAL,
+        // prettier-ignore
+        cabinet: [
+          [50, -18.1], [70, -0.2], [90, 6], [115, 6.2], [140, 3.2], [180, 1.4], [225, -1.2], [280, -5.2],
+          [400, -10.4], [560, -12.8], [800, -12.3], [1100, -11.3], [1450, -8.7], [1800, -4], [2250, -2.3],
+          [2800, -2.2], [3500, -2], [4500, -3.7], [5600, -11.6], [7000, -21.2], [9000, -28], [12000, -35.4],
+        ],
+      },
+      level: 0.15,
+    },
   },
 };
 
@@ -204,64 +221,29 @@ export function takesOf(sound) {
 }
 
 /** A recording played at another pitch: the recorded note and the playback rate for it. */
-const shifted = (instrument, midi, recorded, muted = false) => ({
-  instrument,
-  midi: recorded,
-  rate: 2 ** ((midi - recorded) / 12),
-  muted,
-});
+const shifted = (instrument, midi, recorded) => ({ instrument, midi: recorded, rate: 2 ** ((midi - recorded) / 12) });
 
 /**
- * The recordings a sound with `chords` can use for a stroke. No two strokes of a real guitar sound
- * the same, so there are several: another performance, or the neighbouring note or chord moved to
- * the right pitch. Two of them half a list apart are never the same performance.
+ * What each take plays for a note: a recorded note and its playback rate. `count` numbers the times
+ * this note has been played; with `vary`, every time differs from the last, like a real guitar.
  */
-function recordingsFor(sound, { midis, muted }) {
-  const [midi] = midis;
-  if (midis.length === 1) {
-    const { instrument } = sound;
-    const neighbour = midi < highest(instrument) ? midi + 1 : midi - 1;
-    return [shifted(instrument, midi, midi), shifted(instrument, midi, neighbour)];
-  }
-  // Every recording of the chord itself, then those of the chords next to it.
-  const sets = muted ? sound.chords.muted : sound.chords.ringing;
-  const found = [0, 1, -1, 2, -2].flatMap((step) =>
-    sets.filter((set) => nearest(set, midi + step) === midi + step).map((set) => shifted(set, midi, midi + step, muted)),
-  );
-  const [first, second, third, fourth] = found;
-  // Chugs take turns, so that each guitar plays four different ones before one comes back.
-  return muted ? [first, fourth, second, third] : [first, second];
-}
-
-/**
- * What each take plays for a stroke (strokesOf in performance.js): a recorded note, its playback
- * rate, and whether the recording is palm-muted itself. `count` numbers the strokes of a kind.
- */
-export function voicesFor(sound, stroke, count) {
-  const takes = takesOf(sound);
-  if (!sound.chords) {
-    return takes.map((take) => ({ instrument: take.instrument, midi: stroke.midis[0], rate: take.detune }));
-  }
-  const recordings = recordingsFor(sound, stroke);
-  return takes.map((_, t) => recordings[(count + (t * recordings.length) / takes.length) % recordings.length]);
+export function voicesFor(sound, { midi }, count) {
+  return takesOf(sound).map((take, t) => {
+    if (!sound.vary) return { instrument: take.instrument, midi, rate: take.detune };
+    const neighbour = midi < highest(take.instrument) ? midi + 1 : midi - 1;
+    return shifted(take.instrument, midi, (count + t) % 2 ? neighbour : midi);
+  });
 }
 
 /** Every recording a set of diagrams needs in a genre's playback mode: instrument -> MIDI notes. */
 export function recordingsNeeded(genreId, mode, fretsList, tuning) {
   const sound = soundFor(genreId, mode);
   const needed = new Map();
-  const add = ({ instrument, midi }) => needed.set(instrument, (needed.get(instrument) || new Set()).add(midi));
-  const notes = notesOf(fretsList, tuning);
-  if (!sound.chords) {
-    for (const { instrument } of takesOf(sound)) notes.forEach((midi) => add({ instrument, midi }));
-    return needed;
-  }
-  if (mode === 'arpeggio') {
-    for (const midi of notes) recordingsFor(sound, { midis: [midi] }).forEach(add);
-  } else {
-    for (const frets of fretsList) {
-      const midis = notesOf([frets], tuning);
-      for (const muted of [false, true]) recordingsFor(sound, { midis, muted }).forEach(add);
+  for (const midi of notesOf(fretsList, tuning)) {
+    for (const count of [0, 1]) {
+      for (const voice of voicesFor(sound, { midi }, count)) {
+        needed.set(voice.instrument, (needed.get(voice.instrument) || new Set()).add(voice.midi));
+      }
     }
   }
   return needed;
