@@ -9,6 +9,7 @@ Generate four-chord guitar progressions that actually sound like your genre, see
 - **Chord diagrams** in the classic chord-box style: `o` / `x` above the nut, dots, barres, and a fret label (`5fr`) higher up the neck.
 - **Playback** strummed (with a rhythm typical of the genre) or as an arpeggio, with tempo, loop, and click-a-chord to hear one on its own.
 - **Share links:** the URL holds the exact progression and diagrams.
+- **Save as image:** a PNG of the four chord cards with the genre, key, numerals and tuning.
 
 Standard tuning, except Metalcore in Drop C (every string a tone lower, the low one two tones, down to C; its diagrams name the strings). The sound comes from guitar recordings, tuned and levelled as they load, with effects per genre: chorus, compression, echo, reverb, and tape wobble with vinyl crackle for LoFi. Most genres play one recorded note per string. Strumming always plays the whole chord, in a rhythm typical of the genre. Neo Soul is one Stratocaster close up (neck pickup, a warm compressed amp, a slow chorus, slaps on the backbeat); Post Rock is two far apart (bridge pickup, a chiming amp, bouncing echoes, a hall, a build-up from quiet to loud); Shoegaze is two fuzz guitars far apart, swaying as if on the tremolo arm, with a crisp clean one between them and a big dark hall. Metalcore plays two rhythm guitars, left and right: whole power chords and palm mutes recorded straight from the guitar, each side through its own simulated high-gain amp and speaker, so the strings distort together; chugs come in groups, each opened by a ringing accent, and the last bar rings out in eighths.
 
@@ -35,7 +36,7 @@ Each genre has 5 to 8 progression patterns in Roman numerals (`js/genres.js`). O
 - playback only ever plays the diagram's own notes, inside the chord's bar, one note per string and guitar at a time;
 - strumming plays whole chords only: every string of the diagram, or its top four on an upstroke (Neo Soul also slaps them all);
 - Metalcore never leaves a gap (every stroke lasts until the next, over chord changes and around the loop), and its two guitars never play the same recording at once;
-- every note a chord shape can reach has a recording with a tuning correction, and share links survive a round trip.
+- every note a chord shape can reach has a recording with a tuning correction, share links survive a round trip, and the saved image is well-formed with every chord on it.
 
 ## Run it locally
 
@@ -55,6 +56,7 @@ js/voicings.js     chord shapes and the checks that they are right and playable
 js/genres.js       progressions, keys, voicing taste, tempo and rhythms per genre
 js/generator.js    picks a progression and its shapes
 js/diagram.js      chord-box SVG
+js/sheet.js        the progression as one image, for Save as image
 js/performance.js  turns a progression into timed notes (strum / arpeggio)
 js/samples.js      loads the recordings
 js/recordings.js   every recorded instrument: range, format and measured tuning

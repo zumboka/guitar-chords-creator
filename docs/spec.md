@@ -16,7 +16,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Neo Soul and Post Rock sound | Changed on 2026-11-25: the user found the two too similar (they shared the instrument and nearly all effects). Now a Stratocaster recorded clean (EGFxSet, CC BY 4.0) with its neck pickup for Neo Soul and its bridge pickup for Post Rock, and an amp, rhythm and space of their own |
 | Shoegaze sound | Changed on 2026-11-25: the user found the guitar a bit plain and not as crisp as the other genres (a soundfont's overdriven guitar, doubled: nearly everything below 500 Hz and no pick attack). Now the Stratocaster recordings as two fuzz guitars and a bright clean one |
 | Strumming | Decided by the user on 2026-11-25: chords are played normally and typical of the genre, with the genre's typical sound; no extra effects (such as the ringing of a second, tremolo-picked guitar) and no extra notes (bass notes, stabs, slides). And on 2026-11-25: every genre needs its typical character when strummed; the bare strums of Neo Soul and Post Rock had none. So whole chords only (a test enforces it for every genre), in the sound world the user likes in the arpeggios |
-| Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link |
+| Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link; saving the chords as an image (a PNG), the user's request on 2026-11-27 |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
 | Stack | Plain HTML/CSS/JavaScript (ES modules), no framework, no build step, no dependencies |
 | Hosting | GitHub Pages from the root of `main` (one-time switch in the repo settings by the owner) |
@@ -27,6 +27,7 @@ A website that generates guitar chord progressions of four different chords for 
 - Genre picker (six buttons) and "New progression". Picking a genre also generates a progression and sets the genre's tempo.
 - Key and Roman numerals above four chord cards (name, diagram, numeral, frets).
 - Strum, Arpeggio and Stop; tempo 50 to 220 BPM; loop; the playing chord is highlighted.
+- "Save as image" under the cards downloads a PNG (1920 px wide) of the genre, key, numerals, tuning and the four chord cards, light like printed chord boxes in either theme (`js/sheet.js`).
 - Works at phone width; light and dark themes; the chord cards stay paper white.
 
 ## Music
@@ -98,6 +99,6 @@ Measured on real metal rhythm guitars (Freesound previews, used for analysis onl
 
 ## Verification
 
-- Unit tests (`node --test`): every diagram spells its chord name (bass note, defining tones, no foreign notes) and is playable (stretch ≤ 4 frets, ≤ 4 fingers); every progression has four different chords and follows its genre's rules over 1,500 random generations per genre; playback only plays the diagram's notes inside the chord's bar; every reachable note has a recording and a tuning correction; share links round-trip.
-- Browser check: every genre and both playback modes, diagrams against the reference, no console errors, phone width, output levels evened out across genres.
+- Unit tests (`node --test`): every diagram spells its chord name (bass note, defining tones, no foreign notes) and is playable (stretch ≤ 4 frets, ≤ 4 fingers); every progression has four different chords and follows its genre's rules over 1,500 random generations per genre; playback only plays the diagram's notes inside the chord's bar; every reachable note has a recording and a tuning correction; share links round-trip; the saved image is well-formed SVG with every chord.
+- Browser check: every genre and both playback modes, diagrams against the reference, no console errors, phone width, output levels evened out across genres; the saved image in Chrome and Firefox.
 - Not verifiable by the builder: how the sound pleases the ear.

@@ -15,8 +15,17 @@ const WIDTH = 128;
 const HEIGHT = TOP + FRETS * FRET_HEIGHT + 6;
 const TUNING_ROW = 16;
 
-const escape = (text) =>
+export const escapeXML = (text) =>
   String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/** The shape as text, low string first: "x 3 2 0 1 0". */
+export const fretLabel = (frets) => frets.map((f) => (f == null ? 'x' : f)).join(' ');
+
+/** A diagram's viewBox: taller outside standard tuning, for the string names underneath. */
+export const diagramSize = (tuning = 'standard') => ({
+  width: WIDTH,
+  height: HEIGHT + (tuning === 'standard' ? 0 : TUNING_ROW),
+});
 
 /** The first fret the diagram shows: 1 (with the nut) when the shape fits, else its lowest fret. */
 export function baseFret(frets) {
@@ -65,7 +74,6 @@ export function diagramSVG(frets, label = '', tuning = 'standard') {
     parts.push(`<circle class="dot" cx="${sx(s)}" cy="${fy(f)}" r="6.6"/>`);
   });
 
-  let height = HEIGHT;
   if (tuning !== 'standard') {
     const y = TOP + FRETS * FRET_HEIGHT + 14;
     // The dropped string is the one tuned apart from the others (in Drop C they all sit a tone lower).
@@ -75,11 +83,11 @@ export function diagramSVG(frets, label = '', tuning = 'standard') {
       const dropped = offsets[s] !== shared;
       parts.push(`<text class="tuning-note${dropped ? ' retuned' : ''}" x="${sx(s)}" y="${y}">${name}</text>`);
     });
-    height += TUNING_ROW;
   }
 
+  const size = diagramSize(tuning);
   return (
-    `<svg class="diagram" viewBox="0 0 ${WIDTH} ${height}" role="img" aria-label="${escape(label)}">` +
+    `<svg class="diagram" viewBox="0 0 ${size.width} ${size.height}" role="img" aria-label="${escapeXML(label)}">` +
     parts.join('') +
     '</svg>'
   );

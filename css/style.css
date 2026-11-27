@@ -251,10 +251,24 @@ body {
   }
 }
 
+.progression-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 16px;
+  margin-top: 4px;
+}
+
 .hint {
-  margin: 14px 4px 0;
+  margin: 0 4px;
   color: var(--muted);
   font-size: 0.875rem;
+}
+
+/* The button's text lines up with the cards' edge, and its icon with the hint when it wraps below it. */
+.progression-foot .button {
+  margin-inline: -6px;
 }
 
 /* Player */

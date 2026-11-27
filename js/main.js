@@ -1,19 +1,18 @@
-// Page wiring: genre buttons, the progression and its diagrams, playback and share links.
+// Page wiring: genre buttons, the progression and its diagrams, playback, share links and images.
 
 import { GENRES, GENRE_IDS } from './genres.js';
 import { generateProgression } from './generator.js';
-import { diagramSVG } from './diagram.js';
+import { diagramSVG, fretLabel } from './diagram.js';
 import { decodeState, encodeState } from './share.js';
 import { TUNINGS, keyLabel, pretty } from './theory.js';
 import { Player } from './audio.js';
 import { recordingsNeeded } from './sounds.js';
 import { prefetch } from './samples.js';
+import { chordSheet, imageName } from './sheet.js';
 
 const $ = (id) => document.getElementById(id);
 const player = new Player();
 const state = { genre: GENRE_IDS[0], progression: null, bpm: GENRES[GENRE_IDS[0]].tempo, playing: null };
-
-const fretLabel = (frets) => frets.map((f) => (f == null ? 'x' : f)).join(' ');
 
 function renderGenres() {
   $('genres').replaceChildren(
@@ -156,6 +155,35 @@ function toast(text) {
   toast.timer = setTimeout(() => el.classList.remove('is-visible'), 1800);
 }
 
+/** Saves the progression as a PNG: the chord sheet's SVG, drawn onto a canvas. */
+async function saveImage() {
+  const { progression } = state;
+  const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+  const sheet = chordSheet(progression, accent);
+  const image = await loadImage(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(sheet.svg)}`);
+  const canvas = document.createElement('canvas');
+  canvas.width = sheet.width;
+  canvas.height = sheet.height;
+  canvas.getContext('2d').drawImage(image, 0, 0, sheet.width, sheet.height);
+  const png = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  if (!png) throw new Error('The canvas gave no PNG');
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(png);
+  link.download = imageName(progression);
+  link.click();
+  // Some browsers only start reading the file after the click.
+  setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('The chord sheet did not load as an image'));
+    image.src = src;
+  });
+}
+
 function applyShared(shared) {
   state.genre = shared.progression.genre;
   state.progression = shared.progression;
@@ -187,6 +215,12 @@ $('share').addEventListener('click', async () => {
   } catch {
     toast('Copy the address from the address bar to share');
   }
+});
+$('save-image').addEventListener('click', () => {
+  saveImage().catch((error) => {
+    console.error(error);
+    toast('The image could not be saved');
+  });
 });
 
 // A pasted link in the same tab.
