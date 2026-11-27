@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GENRES, GENRE_IDS } from '../js/genres.js';
 import { generateProgression } from '../js/generator.js';
-import { buildPerformance, previewNotes } from '../js/performance.js';
+import { buildPerformance, picksOf, previewNotes } from '../js/performance.js';
 import { TUNINGS, chordTones, mod } from '../js/theory.js';
 import { seededRandom } from '../js/dsp.js';
 
@@ -203,6 +203,26 @@ test('post rock: the arpeggio rings into chords faded in by the second guitar, a
     assert.ok(picked.every((n) => n.swell === 0));
   });
 });
+
+for (const id of GENRE_IDS) {
+  test(`${id}: the arpeggio lights one picked note at a time, every step of its pattern`, () => {
+    const rng = seededRandom(26);
+    const { step, sequence } = GENRES[id].arpeggio;
+    const steps = sequence.filter((idx, k) => idx !== 'x' && k * step < 4).length;
+    for (let run = 0; run < 20; run++) {
+      const p = generateProgression(id, rng);
+      const { notes } = buildPerformance(p, { mode: 'arpeggio', bpm: GENRES[id].tempo });
+      const picks = picksOf(notes);
+      assert.ok(picks.every((n) => !n.dead && !n.swell), 'no slaps, no swelling chords');
+      for (let i = 1; i < picks.length; i++) assert.ok(picks[i].time > picks[i - 1].time, 'one note at a time');
+      for (let i = 0; i < 4; i++) {
+        const bar = picks.filter((n) => n.chord === i);
+        assert.equal(bar.length, steps);
+        for (const n of bar) assert.notEqual(p.chords[i].frets[n.string], null, 'a string of the chord');
+      }
+    }
+  });
+}
 
 test('clicking a diagram strums each of its strings once, low to high', () => {
   const notes = previewNotes([null, 3, 2, 0, 1, 0], 'lofi');

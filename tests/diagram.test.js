@@ -61,6 +61,25 @@ test('Drop B diagrams name the strings and highlight the dropped one', () => {
   assert.equal(count(diagramSVG([0, 2, 2, x, x, x], 'E5'), 'tuning-note'), 0, 'standard tuning needs no labels');
 });
 
+test('every sounding string has a hidden dot, to light while an arpeggio picks it', () => {
+  const picks = (svg) =>
+    [...svg.matchAll(/<circle class="pick" data-string="(\d)" cx="([\d.]+)" cy="([\d.]+)" r="[\d.]+" opacity="0"\/>/g)].map(
+      (m) => m.slice(1).map(Number),
+    );
+  const at = (svg, cls) => [...svg.matchAll(new RegExp(`class="${cls}" cx="([\\d.]+)" cy="([\\d.]+)"`, 'g'))].map((m) => `${m[1]},${m[2]}`);
+  // Open C: on the dots of the fretted notes, on the o of the open strings, none on the muted one.
+  const c = diagramSVG([x, 3, 2, 0, 1, 0], 'C');
+  assert.deepEqual(picks(c).map(([s]) => s), [1, 2, 3, 4, 5]);
+  const dots = at(c, 'dot');
+  const opens = at(c, 'open');
+  for (const [s, cx, cy] of picks(c)) {
+    assert.ok((s === 3 || s === 5 ? opens : dots).includes(`${cx},${cy}`), `string ${s}`);
+  }
+  // A barre: the strings under the bar get theirs on the bar.
+  const e = diagramSVG([x, 7, 9, 9, 9, 7], 'E');
+  assert.deepEqual(picks(e).map(([s, , cy]) => [s, cy]), [[1, 45], [2, 89], [3, 89], [4, 89], [5, 45]]);
+});
+
 test('labels are escaped', () => {
   assert.ok(diagramSVG([0, 2, 2, 0, 0, 0], '"<Em>"').includes('aria-label="&quot;&lt;Em&gt;&quot;"'));
 });

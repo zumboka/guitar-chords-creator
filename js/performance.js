@@ -105,6 +105,9 @@ export function buildPerformance(progression, { mode, bpm }) {
   return { notes, bar, duration: bar * progression.chords.length };
 }
 
+/** The notes an arpeggio picks one by one, in time order: no slaps and no swelling chords. */
+export const picksOf = (notes) => notes.filter((n) => !n.dead && !n.swell).sort((a, b) => a.time - b.time);
+
 /** One slow downstroke of a single chord, for clicking a diagram. */
 export function previewNotes(frets, genreId) {
   const genre = GENRES[genreId];

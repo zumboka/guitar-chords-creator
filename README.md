@@ -7,7 +7,7 @@ Generate four-chord guitar progressions that actually sound like your genre, see
 - **Six genres:** Neo Soul, LoFi, Punk, Post Rock, Shoegaze, Metalcore.
 - **Four different chords** each time, in a key that suits the genre, with Roman numerals.
 - **Chord diagrams** in the classic chord-box style: `o` / `x` above the nut, dots, barres, and a fret label (`5fr`) higher up the neck.
-- **Playback** strummed (with a rhythm typical of the genre) or as an arpeggio, with tempo, loop, and click-a-chord to hear one on its own.
+- **Playback** strummed (with a rhythm typical of the genre) or as an arpeggio, with tempo, loop, and click-a-chord to hear one on its own. During an arpeggio, the note being picked lights up as a green dot on its diagram.
 - **Share links:** the URL holds the exact progression and diagrams.
 - **Save as image:** a PNG of the four chord cards with the genre, key, numerals and tuning.
 

@@ -1,6 +1,7 @@
 // Chord-box diagrams as SVG: strings left (lowest) to right, o / x above a thick nut,
 // dots on the frets, a bar for barre chords and a fret label ("5fr") higher up the neck.
-// Outside standard tuning the string names go underneath, the dropped one highlighted.
+// Outside standard tuning the string names go underneath, the dropped one highlighted. Every
+// sounding string also has a hidden dot of its own, which the page lights while an arpeggio picks it.
 
 import { TUNINGS, pretty } from './theory.js';
 import { findBarre } from './voicings.js';
@@ -72,6 +73,12 @@ export function diagramSVG(frets, label = '', tuning = 'standard') {
     if (f == null || f === 0) return;
     if (barre && f === barre.fret && s >= barre.from && s <= barre.to) return;
     parts.push(`<circle class="dot" cx="${sx(s)}" cy="${fy(f)}" r="6.6"/>`);
+  });
+  // On the fretted note, or where an open string has its o; invisible until css/style.css lights it.
+  frets.forEach((f, s) => {
+    if (f == null) return;
+    const [cy, r] = f === 0 ? [TOP - 13, 5.4] : [fy(f), 7.2];
+    parts.push(`<circle class="pick" data-string="${s}" cx="${sx(s)}" cy="${cy}" r="${r}" opacity="0"/>`);
   });
 
   if (tuning !== 'standard') {

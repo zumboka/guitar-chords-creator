@@ -99,6 +99,13 @@ function highlight(index) {
     .forEach((card, i) => card.classList.toggle('is-playing', i === index));
 }
 
+/** Lights the note an arpeggio has just picked as a green dot on its diagram. */
+function highlightNote(note) {
+  const chords = $('chords');
+  chords.querySelector('.pick.is-picked')?.classList.remove('is-picked');
+  if (note) chords.children[note.chord]?.querySelector(`.pick[data-string="${note.string}"]`)?.classList.add('is-picked');
+}
+
 function play(mode) {
   if (state.playing === mode) {
     stop();
@@ -112,6 +119,7 @@ function play(mode) {
         loop: $('loop').checked,
         onStart: () => setPlaying(mode),
         onChord: highlight,
+        onNote: highlightNote,
         onEnd: () => setPlaying(null),
       })
       .catch((error) => {

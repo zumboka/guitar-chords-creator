@@ -16,7 +16,7 @@ A website that generates guitar chord progressions of four different chords for 
 | Neo Soul and Post Rock sound | Changed on 2026-11-25: the user found the two too similar (they shared the instrument and nearly all effects). Now a Stratocaster recorded clean (EGFxSet, CC BY 4.0) with its neck pickup for Neo Soul and its bridge pickup for Post Rock, and an amp, rhythm and space of their own |
 | Shoegaze sound | Changed on 2026-11-25: the user found the guitar a bit plain and not as crisp as the other genres (a soundfont's overdriven guitar, doubled: nearly everything below 500 Hz and no pick attack). Now the Stratocaster recordings as two fuzz guitars and a bright clean one |
 | Strumming | Decided by the user on 2026-11-25: chords are played normally and typical of the genre, with the genre's typical sound; no extra effects (such as the ringing of a second, tremolo-picked guitar) and no extra notes (bass notes, stabs, slides). And on 2026-11-25: every genre needs its typical character when strummed; the bare strums of Neo Soul and Post Rock had none. So whole chords only (a test enforces it for every genre), in the sound world the user likes in the arpeggios |
-| Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link; saving the chords as an image (a PNG), the user's request on 2026-11-27 |
+| Extras | Tempo slider, loop, click a diagram to hear that chord, shareable link; saving the chords as an image (a PNG) and the picked note of an arpeggio as a green dot on the diagram, the user's requests on 2026-11-27 |
 | Not included | Locking a chord while re-rolling the others; choosing the key |
 | Stack | Plain HTML/CSS/JavaScript (ES modules), no framework, no build step, no dependencies |
 | Hosting | GitHub Pages from the root of `main` (one-time switch in the repo settings by the owner) |
@@ -26,7 +26,7 @@ A website that generates guitar chord progressions of four different chords for 
 
 - Genre picker (six buttons) and "New progression". Picking a genre also generates a progression and sets the genre's tempo.
 - Key and Roman numerals above four chord cards (name, diagram, numeral, frets).
-- Strum, Arpeggio and Stop; tempo 50 to 220 BPM; loop; the playing chord is highlighted.
+- Strum, Arpeggio and Stop; tempo 50 to 220 BPM; loop; the playing chord is highlighted. During an arpeggio the note being picked shows as a full green dot on its diagram (the user's request on 2026-11-27), in step with what comes out of the speakers (the audio output's own clock), so you can see which string to play.
 - "Save as image" under the cards downloads a PNG (1920 px wide) of the genre, key, numerals, tuning and the four chord cards, light like printed chord boxes in either theme (`js/sheet.js`).
 - Works at phone width; light and dark themes; the chord cards stay paper white.
 

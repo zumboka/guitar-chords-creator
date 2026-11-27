@@ -238,6 +238,15 @@ body {
   font-weight: 800;
 }
 
+/* The note an arpeggio is picking, as a full green dot. */
+.diagram .pick {
+  fill: #16a34a;
+}
+
+.diagram .pick.is-picked {
+  opacity: 1;
+}
+
 .tuning {
   margin: 4px 0 0;
   color: var(--accent);

@@ -6,7 +6,7 @@ import { recordingsNeeded, soundFor, takesOf, voicesFor } from './sounds.js';
 import { createAmp } from './amp.js';
 import { impulseResponse, seededRandom, vinylNoise } from './dsp.js';
 import { filter, gain, series } from './nodes.js';
-import { buildPerformance, previewNotes } from './performance.js';
+import { buildPerformance, picksOf, previewNotes } from './performance.js';
 import { SampleBank } from './samples.js';
 
 const NOTE_LEVEL = 0.5;
@@ -293,14 +293,28 @@ export class Player {
 
   /**
    * Plays the progression as soon as its notes are loaded. `onStart()` fires when the sound
-   * starts, `onChord(index)` follows along (-1 when done), `onEnd()` when it stops.
+   * starts, `onChord(index)` follows along (-1 when done), and in an arpeggio `onNote(note)` with
+   * the note just picked, `{ chord, string }` (null when none); `onEnd()` fires when it stops.
    * Rejects when the notes can't be loaded.
    */
-  async play(progression, { mode, bpm, loop = false, onStart, onChord, onEnd }) {
+  async play(progression, { mode, bpm, loop = false, onStart, onChord, onNote, onEnd }) {
     this.stop();
     const ctx = this.ensure(progression.genre, mode);
     const sound = soundFor(progression.genre, mode);
-    const session = { progression, mode, bpm, loop, onChord, onEnd, sources: [], cycles: [], timers: [], chord: -1 };
+    const session = {
+      progression,
+      mode,
+      bpm,
+      loop,
+      onChord,
+      onNote,
+      onEnd,
+      sources: [],
+      cycles: [],
+      timers: [],
+      chord: -1,
+      note: null,
+    };
     this.session = session;
     try {
       await loadNotes(this.bank, progression.genre, fretsOf(progression), mode);
@@ -317,7 +331,7 @@ export class Player {
     if (onStart) onStart();
     const follow = () => {
       if (this.session !== session) return;
-      this.followChord(session);
+      this.follow(session);
       session.frame = requestAnimationFrame(follow);
     };
     session.frame = requestAnimationFrame(follow);
@@ -329,7 +343,8 @@ export class Player {
     session.sources = session.sources
       .slice(-400)
       .concat(scheduleNotes(this.ctx, session.takes, perf.notes, startAt, sound, this.bank));
-    session.cycles = session.cycles.slice(-2).concat({ start: startAt, bar: perf.bar, end: startAt + perf.duration });
+    const picks = session.mode === 'arpeggio' ? picksOf(perf.notes) : [];
+    session.cycles = session.cycles.slice(-2).concat({ start: startAt, bar: perf.bar, end: startAt + perf.duration, picks });
     const end = startAt + perf.duration;
     const wait = (end - this.ctx.currentTime - LOOKAHEAD) * 1000;
     session.timers.push(
@@ -341,16 +356,30 @@ export class Player {
     );
   }
 
-  followChord(session) {
-    const t = this.ctx.currentTime;
+  /** Keeps the page with what is heard: the chord, and in an arpeggio the note picked last. */
+  follow(session) {
+    const t = this.heard();
     let chord = -1;
+    let note = null;
     for (const c of session.cycles) {
-      if (t >= c.start && t < c.end) chord = Math.min(3, Math.floor((t - c.start) / c.bar));
+      if (t < c.start || t >= c.end) continue;
+      chord = Math.min(3, Math.floor((t - c.start) / c.bar));
+      note = c.picks.findLast((n) => c.start + n.time <= t) || null;
     }
     if (chord !== session.chord) {
       session.chord = chord;
       if (session.onChord) session.onChord(chord);
     }
+    if (note !== session.note) {
+      session.note = note;
+      if (session.onNote) session.onNote(note);
+    }
+  }
+
+  /** The moment of the playback now coming out of the speakers, on the audio clock. */
+  heard() {
+    const stamp = this.ctx.getOutputTimestamp ? this.ctx.getOutputTimestamp() : null;
+    return stamp && stamp.contextTime > 0 ? stamp.contextTime : this.ctx.currentTime;
   }
 
   /** Fades out a chord that was clicked; a chord still loading stays silent. */
@@ -383,6 +412,7 @@ export class Player {
       session.takes.close(500);
     }
     if (session.onChord) session.onChord(-1);
+    if (session.onNote) session.onNote(null);
     if (session.onEnd) session.onEnd();
   }
 
