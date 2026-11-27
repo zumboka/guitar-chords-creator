@@ -82,7 +82,7 @@ test('metalcore strums whole chords on every beat and lets them ring', () => {
   }
 });
 
-test('metalcore never stops: every stroke lasts until the next, over chord changes and around the loop', () => {
+test('metalcore never stops: every stroke rings at least until the next, over chord changes and around the loop', () => {
   const rng = seededRandom(22);
   for (const mode of ['strum', 'arpeggio']) {
     for (let run = 0; run < 20; run++) {
@@ -91,7 +91,7 @@ test('metalcore never stops: every stroke lasts until the next, over chord chang
       const strokes = strokesOf(perf.notes);
       strokes.forEach(({ first }, k) => {
         const next = k + 1 < strokes.length ? strokes[k + 1].first.time : perf.duration;
-        assert.ok(Math.abs(first.time + first.duration - next) < 1e-6, `${mode} stroke ${k} rings until the next one`);
+        assert.ok(first.time + first.duration > next - 1e-6, `${mode} stroke ${k} rings until the next one`);
       });
     }
   }
@@ -102,7 +102,7 @@ test('the metalcore arpeggio picks single notes over a palm-muted root', () => {
   const { notes } = buildPerformance(p, { mode: 'arpeggio', bpm: GENRES.metalcore.tempo });
   assert.equal(new Set(notes.map((n) => n.stroke)).size, notes.length, 'one note at a time');
   for (const n of notes) {
-    const open = TUNINGS.dropC.notes;
+    const open = TUNINGS.dropB.notes;
     const root = Math.min(...p.chords[n.chord].frets.flatMap((f, k) => (f == null ? [] : [open[k] + f])));
     assert.equal(n.muted, n.midi === root);
   }

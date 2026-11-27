@@ -125,22 +125,22 @@ const OPEN = [
   ['sus4', 'B', [x, 2, 4, 4, 0, 0]],
 ].map(toShape);
 
-// Drop C, for Metalcore: every string a tone lower than in standard tuning, the low one two tones.
-// Full chords as metalcore guitarists play them: root, fifth and octave under one finger across the
-// three lowest strings with the rest of the chord on top, or the A shape of standard tuning on the
-// second string.
-const DROP_C = [
-  ['maj', 'D', [2, 2, 2, 4, 5, 4]],
-  ['m', 'D', [2, 2, 2, 4, 5, 3]],
-  ['7', 'D', [2, 2, 2, 4, 3, 4]],
-  ['m7', 'D', [2, 2, 2, 4, 3, 3]],
-  ['maj', 'A', [x, 2, 4, 4, 4, 2]],
-  ['m', 'A', [x, 2, 4, 4, 3, 2]],
-  ['7', 'A', [x, 2, 4, 2, 4, 2]],
-  ['m7', 'A', [x, 2, 4, 2, 3, 2]],
+// Drop B, for Metalcore: every string a tone and a half lower than in standard tuning, the low one
+// two and a half. Full chords as metalcore guitarists play them: root, fifth and octave under one
+// finger across the three lowest strings with the rest of the chord on top, or the A shape of
+// standard tuning on the second string.
+const DROP_B = [
+  ['maj', 'C#', [2, 2, 2, 4, 5, 4]],
+  ['m', 'C#', [2, 2, 2, 4, 5, 3]],
+  ['7', 'C#', [2, 2, 2, 4, 3, 4]],
+  ['m7', 'C#', [2, 2, 2, 4, 3, 3]],
+  ['maj', 'G#', [x, 2, 4, 4, 4, 2]],
+  ['m', 'G#', [x, 2, 4, 4, 3, 2]],
+  ['7', 'G#', [x, 2, 4, 2, 4, 2]],
+  ['m7', 'G#', [x, 2, 4, 2, 3, 2]],
 ].map(toShape);
 
-/** The same shape two frets lower: on the open strings, the chords of C and G. */
+/** The same shape two frets lower: on the open strings, the chords of B and F#. */
 const lower = (shape) => ({
   ...shape,
   rootPc: mod(shape.rootPc - 2, 12),
@@ -149,7 +149,7 @@ const lower = (shape) => ({
 
 export const SHAPES = {
   standard: { movable: MOVABLE, open: OPEN },
-  dropC: { movable: DROP_C, open: DROP_C.map(lower) },
+  dropB: { movable: DROP_B, open: DROP_B.map(lower) },
 };
 
 const MAX_FRET = 14;

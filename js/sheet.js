@@ -49,7 +49,7 @@ export function chordSheet(progression, accent) {
     ['key', 34, `Key of ${pretty(keyLabel(key))}`],
     ['romans', 27, chords.map((c) => pretty(c.roman)).join(' – ')],
   ];
-  if (tuningId !== 'standard') heading.push(['tuning', 25, `${tuning.name} tuning: ${tuning.strings.join(' ')}`]);
+  if (tuningId !== 'standard') heading.push(['tuning', 25, `${tuning.name} tuning: ${tuning.strings.map(pretty).join(' ')}`]);
   let y = MARGIN;
   for (const [cls, step, content] of heading) {
     y += step;

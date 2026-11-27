@@ -169,8 +169,8 @@ export const SOUNDS = {
       { pan: -1, cabinet: 1 },
       { pan: 1, cabinet: 2 },
     ],
-    // For picked notes, a cabinet fitted to the spectrum of real metal rhythm guitars in Drop C, with the
-    // bite of metalcore ones (docs/spec.md).
+    // For picked notes, a cabinet fitted to the spectrum of real metal rhythm guitars, with the bite of
+    // metalcore ones (docs/spec.md).
     amp: {
       ...METAL,
       // prettier-ignore

@@ -2,7 +2,7 @@
 // dots on the frets, a bar for barre chords and a fret label ("5fr") higher up the neck.
 // Outside standard tuning the string names go underneath, the dropped one highlighted.
 
-import { TUNINGS } from './theory.js';
+import { TUNINGS, pretty } from './theory.js';
 import { findBarre } from './voicings.js';
 
 const FRETS = 5;
@@ -76,12 +76,12 @@ export function diagramSVG(frets, label = '', tuning = 'standard') {
 
   if (tuning !== 'standard') {
     const y = TOP + FRETS * FRET_HEIGHT + 14;
-    // The dropped string is the one tuned apart from the others (in Drop C they all sit a tone lower).
+    // The dropped string is the one tuned apart from the others (in Drop B they all sit three semitones lower).
     const offsets = TUNINGS[tuning].notes.map((note, s) => note - TUNINGS.standard.notes[s]);
     const shared = offsets.find((o) => offsets.filter((p) => p === o).length > offsets.length / 2) ?? 0;
     TUNINGS[tuning].strings.forEach((name, s) => {
       const dropped = offsets[s] !== shared;
-      parts.push(`<text class="tuning-note${dropped ? ' retuned' : ''}" x="${sx(s)}" y="${y}">${name}</text>`);
+      parts.push(`<text class="tuning-note${dropped ? ' retuned' : ''}" x="${sx(s)}" y="${y}">${pretty(name)}</text>`);
     });
   }
 

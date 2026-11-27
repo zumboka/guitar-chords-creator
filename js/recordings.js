@@ -47,14 +47,14 @@ export const RECORDINGS = {
       5, 5, 9, 9, 4, 4, 4, 4, 4, 4, 3, 4, 3, 5, 5, 5, 5, 5, 5, 6,
     ],
   },
-  // Also recorded without an amp, for Metalcore: single notes of a seven-string guitar, 36 (low C)
-  // to 76 (fret 14 on Drop C's top string).
+  // Also recorded without an amp, for Metalcore: single notes of a seven-string guitar, 35 (low B)
+  // to 76.
   di_guitar: {
     type: 'flac',
-    low: 36,
+    low: 35,
     cents: [
-      -9, -2, -5, -8, -6, 7, 8, 4, 3, 3, 6, 5, 1, -2, -2, 6, 5, 8, 8, 7, 5,
-      5, 3, 2, -3, -1, -2, -3, -3, -3, -4, -5, -5, -6, -7, -7, -4, -7, -6, -5, -6,
+      -7, -9, -2, -5, -8, -6, 7, 8, 4, 3, 3, 6, 5, 1, -2, -2, 6, 5, 8, 8, 7,
+      5, 5, 3, 2, -3, -1, -2, -3, -3, -3, -4, -5, -5, -6, -7, -7, -4, -7, -6, -5, -6,
     ],
   },
 };

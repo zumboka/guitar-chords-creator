@@ -39,7 +39,7 @@ test('tunings name their open strings correctly', () => {
     assert.equal(tuning.notes.length, 6, id);
     tuning.strings.forEach((name, s) => assert.equal(parseNote(name).pc, tuning.notes[s] % 12, `${id} string ${s}`));
   }
-  TUNINGS.dropC.notes.forEach((note, s) => assert.equal(note, TUNINGS.standard.notes[s] - (s ? 2 : 4)));
+  TUNINGS.dropB.notes.forEach((note, s) => assert.equal(note, TUNINGS.standard.notes[s] - (s ? 3 : 5)));
 });
 
 test('diatonic check', () => {

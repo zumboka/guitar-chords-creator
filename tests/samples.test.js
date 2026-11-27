@@ -188,7 +188,7 @@ test('notesOf lists each sounding note once, lowest first', () => {
     ]),
     [43, 47, 48, 50, 52, 55, 59, 60, 64, 67],
   );
-  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropC'), [36, 43, 48]);
+  assert.deepEqual(notesOf([[0, 0, 0, null, null, null]], 'dropB'), [35, 42, 47]);
 });
 
 /** An audio context that decodes anything into a short tone. */

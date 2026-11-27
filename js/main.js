@@ -40,7 +40,7 @@ function render() {
   $('key').textContent = `Key of ${pretty(keyLabel(progression.key))}`;
   $('romans').textContent = progression.chords.map((c) => pretty(c.roman)).join(' – ');
   $('tuning').hidden = tuningId === 'standard';
-  $('tuning').textContent = `${tuning.name} tuning: ${tuning.strings.join(' ')}`;
+  $('tuning').textContent = `${tuning.name} tuning: ${tuning.strings.map(pretty).join(' ')}`;
   $('chords').replaceChildren(
     ...progression.chords.map((chord, index) => {
       const name = pretty(chord.name);

@@ -205,15 +205,15 @@ export const GENRES = {
 
   metalcore: {
     name: 'Metalcore',
-    blurb: 'Two high-gain guitars in Drop C: emotional minor-key choruses as full chords, ringing on every beat.',
+    blurb: 'Two high-gain guitars in Drop B: emotional minor-key choruses as full chords, ringing on every beat.',
     tempo: 184,
     swing: 0,
-    // Every string a tone lower and the low one two, with the open chords of C on the low strings.
-    tuning: 'dropC',
+    // Every string three semitones lower and the low one five, with the open chords of B on the low strings.
+    tuning: 'dropB',
     keys: {
       major: [],
-      // Mostly C minor, the key of the open low string.
-      minor: ['C', 'C', 'C', 'D', 'F', 'G'],
+      // Mostly B minor, the key of the open low string and of the user's example.
+      minor: ['B', 'B', 'B', 'C#', 'E', 'F#'],
     },
     // Full minor and major chords, as in the chorus of Jared Dines' "Metalcore VS Deathcore" (the
     // user's example: i7-IV-v7-VI, then iv-III-v-VI) and in metalcore songs (docs/spec.md).
@@ -227,12 +227,13 @@ export const GENRES = {
       { id: 'one-seven-six-five', mode: 'minor', chords: ['i:m', 'bVII:maj', 'bVI:maj', 'V:maj'] },
       { id: 'phrygian', mode: 'minor', chords: ['i:m', 'bII:maj', 'bVII:maj', 'bVI:maj'] },
     ],
-    // Low on the neck, the root on the low string where it fits, the open chords of C.
+    // Low on the neck, the root on the low string where it fits, the open chords of B and F#.
     voicing: { center: 4, centerWeight: 0.1, open: -0.3, move: 0.08, bassString: 0, bassPenalty: 0.5 },
     // Whole chords left to ring, struck again on every beat in downstrokes.
     strum: { spread: 0.003, pattern: riff('X---X---X---X---') },
-    // Low, middle and top in groups of three, three and two, the low note palm-muted.
-    arpeggio: { step: 0.5, sequence: [0, 2, 5, 0, 2, 5, 0, 2], ring: 0.5, vel: 0.9, mutes: [0] },
+    // Up through every note of the chord and back down in eighths, each left to ring into the next
+    // ones, the root palm-muted: the third is always there.
+    arpeggio: { step: 0.5, sequence: [0, 1, 2, 3, 4, 5, 4, 3], ring: 2, vel: 0.9, mutes: [0] },
   },
 };
 
